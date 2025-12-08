@@ -20,6 +20,7 @@ BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
 
 BlockToeplitz::~BlockToeplitz()
 {
+    printf("delting blockToeplitz\n");
     for(int i=0;i<Num_Diags;i++)
     {
         delete Vals[i];
@@ -108,10 +109,13 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
 {
 
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
+    printf("num diags=%d\n",Num_Diags);
+    printf("vals[0],%d\n",Vals[0]);
     for(int i;i<Num_Diags;i++)
     {
         result->Diags[i]=Diags[i];
         result->Vals[i] = Vals[i]->Kronecker(B);
+        
     }
     return result;
 }

@@ -10,6 +10,10 @@ Vectord::Vectord(int length = 0)
 {
     Length=length;
     Vec=new double[Length];
+    for(int i=0;i<Length;i++)
+    {
+        Vec[i]=0;
+    }
 }
 
 int Vectord::len()

@@ -40,10 +40,11 @@ SparseToeplitz::SparseToeplitz(SparseToeplitz& other, double c)
 
 SparseToeplitz::~SparseToeplitz()
 {
+    printf("delting blockToeplitz\n");
     delete Vals;
     delete Diags;
 }
-
+ 
 Vectord SparseToeplitz::operator*(Vectord& vec)
 {
 
@@ -77,12 +78,16 @@ void SparseToeplitz::operator*=(double c)
 
 Matrix* SparseToeplitz::Kronecker(Matrix& B)
 {
+   
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
+    
     for(int i=0;i<Num_Diags;i++)
     {
         result->Diags[i]=Diags[i];
-        result->Vals[i] = B.Clone(Vals[i]);     
+        result->Vals[i] = B.Clone(Vals[i]);   
     }
+    
+    printf("vals[i],%f\n",result->Vals);
     return result;
 }
 

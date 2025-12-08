@@ -13,7 +13,7 @@ class BlockToeplitz: public Matrix
 public:
     int Num_Diags;
     int* Diags;
-    MatrixPointer* Vals;       // sub-Toeplitz matrices (only if recursive)
+    MatrixPointer* Vals;       //sub-Toeplitz matrices (only if recursive)
 
     // constructor
     BlockToeplitz(int nrows, int ncols, int ndiags);
