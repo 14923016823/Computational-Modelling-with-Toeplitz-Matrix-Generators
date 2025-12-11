@@ -2,7 +2,7 @@
 #include <exception>
 #include <cmath>
 #include <initializer_list>
-#include <tuple> //khfjyfgukyfjg
+#include <tuple>
 
 typedef std::tuple<double,int,int> tuple;
 
