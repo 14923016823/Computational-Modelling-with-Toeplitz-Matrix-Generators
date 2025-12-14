@@ -1,9 +1,9 @@
 #include "COO.h"
 
-COO::COO(int length, int num_rows, int num_cols)
+COO::COO(int num_vals, int num_rows, int num_cols)
 {
-    Length = length;
-    Array = new tuple[Length];
+    Num_Vals = num_vals;
+    Array = new tuple[Num_Vals];
     Num_Rows = num_rows;
     Num_Cols = num_cols;
 }
@@ -15,13 +15,13 @@ COO::COO(const std::initializer_list<tuple>& list, int num_rows, int num_cols)
 
 }
 
-virtual Vectord COO::operator*(const Vectord vect)
+Vectord COO::operator*(Vectord& vect)
 {
     Vectord result(Num_Rows);
     double value;
     int row_ind;
     int col_ind;
-    for(int i=0;i<Length;i++)
+    for(int i=0;i<Num_Vals;i++)
     {
         value = std::get<0>(Array[i]);
         row_ind = std::get<1>(Array[i]);
@@ -31,7 +31,7 @@ virtual Vectord COO::operator*(const Vectord vect)
     return result;
 }
 
-~COO()
+COO::~COO()
 { 
     delete[] Array;
 }
@@ -39,7 +39,7 @@ virtual Vectord COO::operator*(const Vectord vect)
 void COO::print()
 {
     std::cout << '[';
-    for(int i=0;i<Length;i++)
+    for(int i=0;i<Num_Vals;i++)
     {
         std::cout << '(' << std::get<0>(Array[i]) << ", "
                             << std::get<1>(Array[i]) << ", "
@@ -48,37 +48,37 @@ void COO::print()
     std::cout << ']' << std::endl;
 }
 
-COO::COO(SparseToeplitz ST)
+COO::COO(SparseToeplitz& ST)
 {
-    Length = 0;
-    Num_Rows = ST.Num_Rows;
-    Num_Cols = ST.Num_Cols;
+    Num_Vals = 0;
+    Num_Rows = ST.rows();
+    Num_Cols = ST.cols();
 
     //Determine number of non-zero values
-    for(int q = 0; q<ST.Length;q++)
+    for(int q = 0; q<ST.Num_Diags;q++)
     {
         int f = ST.Diags[q];
         if(f==0)
         {
-            Length += std::min(Num_Cols,Num_Rows);
+            Num_Vals += std::min(Num_Cols,Num_Rows);
         }
         else if(f>0)
         {
-            Length += Num_Cols-f;
+            Num_Vals += Num_Cols-f;
         }
         else
         {
-            Length += Num_Rows+f;
+            Num_Vals += Num_Rows+f;
         }
     }
 
-    Array = new tuple[Length];
+    Array = new tuple[Num_Vals];
     int c = 0;
 
     //Fill Array with correct tuples
     for(int i=0;i<Num_Rows;i++)
     {
-        for(int j = 0;j<ST.Length;j++)
+        for(int j = 0;j<ST.Num_Diags;j++)
         {
             if(Num_Cols > ST.Diags[j]+i && ST.Diags[j]+i >= 0)
             {
@@ -87,4 +87,47 @@ COO::COO(SparseToeplitz ST)
             }
         }
     }
+}
+
+void COO::operator*=(double c) 
+{
+    for (int i=0;i<Num_Vals;i++)
+    {
+        std::get<0>(Array[i])*=c;
+    }
+}
+
+COO::COO(COO& other,double c)
+{
+
+    Num_Rows=other.Num_Rows;
+    Num_Cols=other.Num_Cols;
+    Num_Vals=other.Num_Vals;
+    Array = new tuple[Num_Vals];
+    for(int i=0;i<Num_Vals;i++)
+    {
+        std::get<0>(Array[i])*=c;
+    }
+
+}
+
+Matrix* COO::Clone(double c)
+{
+   return new COO(*this, c);
+}
+
+Matrix* COO::Kronecker(Matrix& B)
+{
+   
+    BlockCOO* result = new BlockCOO(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
+    
+    for(int i=0;i<Num_Vals;i++)
+    {
+        std::get<0>(result->Array[i])=B.Clone(std::get<0>(Array[i]));
+        std::get<1>(result->Array[i])=std::get<1>(Array[i]);
+        std::get<2>(result->Array[i])=std::get<2>(Array[i]);
+    }
+    
+    //printf("vals[i],%f\n",std::get<0>(result->Array)); //This print statement does not work
+    return result;
 }

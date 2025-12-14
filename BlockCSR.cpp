@@ -1,54 +1,55 @@
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
-//#include "Vector.h"
-
-#include "BlockToeplitz.h"
+#include "BlockCSR.h"
 
 
 // constructor
-BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
+BlockCSR::BlockCSR(int nrows, int ncols, int nvals)
 {
     Num_Rows = nrows;
     Num_Cols = ncols;
-    Num_Diags = ndiags;
-    Diags = new int[Num_Diags];
-    Vals = new MatrixPointer[Num_Diags];
+    Num_Vals = nvals;
+    Rows = new int[Num_Rows];
+    Cols = new int[Num_Cols];
+    Vals = new MatrixPointer[Num_Vals];
     //Vals.resize(Num_Diags); 
 }
 
-BlockToeplitz::~BlockToeplitz()
+BlockCSR::~BlockCSR()
 {
-    printf("deleting blockToeplitz\n");
-    for(int i=0;i<Num_Diags;i++)
+    printf("deleting blockCSR\n");
+    for(int i=0;i<Num_Vals;i++)
     {
         delete Vals[i];
     }
     delete Vals;
-    delete Diags;
+    delete Rows;
+    delete Cols;
 }
 
 // constructo
 
 //copy and scale constructor
-BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
+BlockCSR::BlockCSR(BlockCSR& other,double c)
 {
 
     Num_Rows=other.Num_Rows;
-    Num_Cols=other.Num_Rows;
-    Num_Diags=other.Num_Diags;
-    Diags=new int[Num_Diags];
-    Vals = new MatrixPointer[Num_Diags];
-    for(int i=0;i<Num_Diags;i++)
+    Num_Cols=other.Num_Cols;
+    Num_Vals=other.Num_Vals;
+    Cols = new int[Num_Vals];
+    Rows = new int[Num_Rows+1];
+    Vals = new MatrixPointer[Num_Vals];
+    for(int i=0;i<Num_Vals;i++)
     {
-        Diags[i]=other.Diags[i];
+        Cols[i]=other.Cols[i];
         Vals[i]=other.Clone(c);
+    }
+    for(int i=0;i<Num_Rows+1;i++)
+    {
+        Rows[i]=other.Rows[i];
     }
 
 }
 
-Vectord BlockToeplitz::operator*(Vectord& vec)
+Vectord BlockCSR::operator*(Vectord& vec)
 {
 
     if (vec.len() != Num_Cols)
@@ -69,9 +70,9 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
         //int row = blockrow *;
         Vectord subres(Num_Rows_SubMatrixes); // initialized to zeros
         // accumulate contributions from each diagonal/block
-        for (int j = 0; j < Num_Diags; j++)
+        for (int j = 0; j < Num_Vals; j++)
         {
-            int blockcol = Diags[j] + blockrow;
+            int blockcol = Cols[j] + blockrow;
             // ensure the whole sub-block fits in input vector
             if (blockcol >= 0 && blockcol<Num_blockcols)
             {
@@ -95,35 +96,39 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
     return result;
 }
 
-void BlockToeplitz::operator*=(double c)
+void BlockCSR::operator*=(double c)
 {
 
-    for(int i=0;i<Num_Diags;i++)
+    for(int i=0;i<Num_Vals;i++)
     {
         (*Vals[i])*=c;
     }
         
 }
 
-Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bottom of the chain every Num_Rows needs to be changed
+Matrix* BlockCSR::Kronecker(Matrix& B)//if you add a new matrix at the bottom of the chain every Num_Rows needs to be changed
 {
 
-    BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
-    printf("num diags=%d\n",Num_Diags);
+    BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
+    printf("num diags=%d\n",Num_Vals);
     printf("vals[0],%d\n",Vals[0]);
-    for(int i;i<Num_Diags;i++)
+    for(int i;i<Num_Vals;i++)
     {
-        result->Diags[i]=Diags[i];
+        result->Cols[i]=Cols[i];
         result->Vals[i] = Vals[i]->Kronecker(B);
         
+    }
+    for(int i=0;i<Num_Rows+1;i++)
+    {
+        result->Rows[i]=Rows[i];
     }
     return result;
 }
 
 //Returns a cloned and scaled version of the input matrix
-Matrix* BlockToeplitz::Clone(double c)
+Matrix* BlockCSR::Clone(double c)
 {
-    BlockToeplitz* copy = new BlockToeplitz(*this, c);
+    BlockCSR* copy = new BlockCSR(*this, c);
     return copy;
 }
 

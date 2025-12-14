@@ -31,7 +31,7 @@ int main()
 
     Vectord z(A*x);
     z.print();
-/*
+
     const int STlength = 3;
     int STdiags[STlength] = {-2,-1,3};
     double STvals[STlength] = {5,1,4};
@@ -45,6 +45,6 @@ int main()
 
     COO C_COO(C);
     C_COO.print();
-*/
+
     return 0;
 }
