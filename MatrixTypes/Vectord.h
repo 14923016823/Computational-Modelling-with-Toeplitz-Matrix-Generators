@@ -1,7 +1,6 @@
 #ifndef VECTORD_H
 #define VECTORD_H
 
-#pragma once
 #include <stdexcept>
 #include <iostream>
 
@@ -23,7 +22,7 @@ public:
 
     int len() const;
 
-    void PrintVector();
+    void PrintVector() const;
 
     double& operator[](int i);
     const double& operator[](int i) const;
@@ -45,6 +44,7 @@ public:
 };
 
 #endif // VECTORD_H
+
 
 
 
