@@ -59,7 +59,7 @@ int Vectord::len() const
     return Length;
 }
 
-void Vectord::PrintVector()
+void Vectord::PrintVector() const
 {
     for (int i = 0; i < Length; ++i)
     {
@@ -101,7 +101,8 @@ void Vectord::resize(int n)
 
 void Vectord::fill(double value)
 {
-    std::fill(Vec, Vec + Length, value);
+    if (Vec)
+    std::fill(Vec, Vec + Length, 0.0);
 }
 
 double Vectord::dot(const Vectord& other) const
@@ -149,4 +150,5 @@ void Vectord::axpby(double a, double b, const Vectord& x)
     for (int i = 0; i < Length; ++i)
         Vec[i] = a * Vec[i] + b * x.Vec[i];
 }
+
 
