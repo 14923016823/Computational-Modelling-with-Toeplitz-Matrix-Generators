@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "Matrix.h"
-#include "VectorD.h"
+#include "Vectord.h"
 
 class DiagonalMatrix : public Matrix 
 {
@@ -30,4 +30,5 @@ public:
     Matrix* Kronecker(Matrix&) override;
 
 };
+
 
