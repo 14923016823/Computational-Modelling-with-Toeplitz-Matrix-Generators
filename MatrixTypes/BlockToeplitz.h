@@ -6,7 +6,7 @@
 //#include <tuple>
 
 #include "Matrix.h"
-#include "VectorD.h"
+#include "Vectord.h"
 
 class BlockToeplitz: public Matrix
 {
@@ -34,4 +34,5 @@ public:
     Matrix* Clone(double c) override;
    
 };
+
 
