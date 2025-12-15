@@ -25,8 +25,8 @@ BlockToeplitz::~BlockToeplitz()
     {
         delete Vals[i];
     }
-    delete Vals;
-    delete Diags;
+    delete[] Vals;
+    delete[] Diags;
 }
 
 // constructo
@@ -136,5 +136,6 @@ Matrix* BlockToeplitz::Clone(double c)
     BlockToeplitz* copy = new BlockToeplitz(*this, c);
     return copy;
 }
+
 
 
