@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 Vectord::Vectord()
     : Length(0), Vec(nullptr)
@@ -56,6 +57,15 @@ Vectord::~Vectord()
 int Vectord::len() const
 {
     return Length;
+}
+
+void Vectord::PrintVector()
+{
+    for (int i = 0; i < Length; ++i)
+    {
+        printf("vec[%d]=%f\n", i, Vec[i]);
+    }
+    printf("done\n");
 }
 
 double& Vectord::operator[](int i)
@@ -139,3 +149,4 @@ void Vectord::axpby(double a, double b, const Vectord& x)
     for (int i = 0; i < Length; ++i)
         Vec[i] = a * Vec[i] + b * x.Vec[i];
 }
+
