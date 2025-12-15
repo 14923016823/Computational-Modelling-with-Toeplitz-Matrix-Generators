@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <iostream>
 //#include <tuple>
-//#include "Vector.h"
+//#include "Vectord.h"
 
 
 #include "DiagonalMatrix.h"
@@ -29,7 +29,7 @@ DiagonalMatrix::DiagonalMatrix(DiagonalMatrix& other, double c)
 
 DiagonalMatrix::~DiagonalMatrix()
 {
-    delete Diag_Vals;
+    delete[] Diag_Vals;
 }
 
 // scalar multiplication
@@ -65,4 +65,5 @@ Matrix* DiagonalMatrix::Kronecker(Matrix&)
 {
     throw std::runtime_error("Kronecker not implemented for DiagonalMatrix");
 }
+
 
