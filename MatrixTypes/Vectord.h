@@ -48,6 +48,5 @@ public:
 
 #endif // VECTORD_H
 
-#endif // VECTORD_HPP
 
 
