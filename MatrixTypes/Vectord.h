@@ -4,18 +4,47 @@
 #include <iostream>
 //#include <tuple>
 
+#ifndef VECTORD_HPP
+#define VECTORD_HPP
 
+#include <stdexcept>
 
-class Vectord
-{
-protected:
-    int Length;
+class Vectord {
 public:
+    int Length;
     double* Vec;
-    Vectord(int length);
+
+    Vectord();
+    explicit Vectord(int n);
+
+    Vectord(const Vectord& other);
+    Vectord(Vectord&& other) noexcept;
+
+    Vectord& operator=(const Vectord& other);
+    Vectord& operator=(Vectord&& other) noexcept;
+
     ~Vectord();
-   
-    int len();
-    void PrintVector();
-    void Sum(const Vectord& VecIn);
+
+    int len() const;
+
+    double& operator[](int i);
+    const double& operator[](int i) const;
+
+    double* data();
+    const double* data() const;
+
+    void resize(int n);
+    void fill(double value);
+
+    double dot(const Vectord& other) const;
+
+    double norm2() const;
+    double norm() const;
+
+    void scal(double a);
+    void axpy(double a, const Vectord& x);
+    void axpby(double a, double b, const Vectord& x);
 };
+
+#endif // VECTORD_HPP
+
