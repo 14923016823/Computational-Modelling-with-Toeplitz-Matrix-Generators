@@ -15,7 +15,7 @@ public:
     Matrix();
     //Matrix(int cols, int rows);
 
-    //virtual ~Matrix();
+    virtual ~Matrix() = default;
 
     // scalar multiplication
     virtual void operator*=(double scalar) = 0;
@@ -28,5 +28,6 @@ public:
 
     virtual Matrix* Kronecker(Matrix&) = 0;
 };
+
 
 typedef  Matrix* MatrixPointer;
