@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <iostream>
 //#include <tuple>
-//#include "Vector.h"
+//#include "Vectord.h"
 
 #include "SparseToeplitz.h"
 #include "BlockToeplitz.h"
@@ -41,8 +41,8 @@ SparseToeplitz::SparseToeplitz(SparseToeplitz& other, double c)
 SparseToeplitz::~SparseToeplitz()
 {
     printf("delting blockToeplitz\n");
-    delete Vals;
-    delete Diags;
+    delete[] Vals;
+    delete[] Diags;
 }
  
 Vectord SparseToeplitz::operator*(Vectord& vec)
@@ -95,4 +95,5 @@ Matrix* SparseToeplitz::Clone(double c)
 {
    return new SparseToeplitz(*this, c);
 }
+
 
