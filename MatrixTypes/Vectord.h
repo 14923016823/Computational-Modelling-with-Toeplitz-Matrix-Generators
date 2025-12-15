@@ -1,13 +1,9 @@
-#pragma once
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
-
 #ifndef VECTORD_H
 #define VECTORD_H
 
+#pragma once
 #include <stdexcept>
+#include <iostream>
 
 class Vectord {
 public:
@@ -26,6 +22,8 @@ public:
     ~Vectord();
 
     int len() const;
+
+    void PrintVector();
 
     double& operator[](int i);
     const double& operator[](int i) const;
@@ -47,6 +45,7 @@ public:
 };
 
 #endif // VECTORD_H
+
 
 
 
