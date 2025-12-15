@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <iostream>
 #include "Matrix.h"
-#include "VectorD.h"
+#include "Vectord.h"
 
 class SparseToeplitz: public Matrix
 {
@@ -24,6 +24,7 @@ public:
     Matrix* Clone(double c) override;
     
 };
+
 
 
 
