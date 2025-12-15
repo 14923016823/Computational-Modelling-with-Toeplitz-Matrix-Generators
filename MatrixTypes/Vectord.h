@@ -4,8 +4,8 @@
 #include <iostream>
 //#include <tuple>
 
-#ifndef VECTORD_HPP
-#define VECTORD_HPP
+#ifndef VECTORD_H
+#define VECTORD_H
 
 #include <stdexcept>
 
@@ -46,5 +46,8 @@ public:
     void axpby(double a, double b, const Vectord& x);
 };
 
+#endif // VECTORD_H
+
 #endif // VECTORD_HPP
+
 
