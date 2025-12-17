@@ -1,10 +1,7 @@
-#pragma once
+#ifndef SPARSE_TOEPLITZ_H
+#define SPARSE_TOEPLITZ_H
 
-#include <vector>
-#include <stdexcept>
-#include <iostream>
 #include "Matrix.h"
-#include "VectorD.h"
 
 class SparseToeplitz: public Matrix
 {
@@ -14,7 +11,11 @@ public:
     int Num_Diags;
     SparseToeplitz(int nrows, int ncols, int ndiags);
     SparseToeplitz(SparseToeplitz& other, double c);
+    SparseToeplitz(int nrows, int ncols, int ndiags, int* diags, double* vals);
+
     ~SparseToeplitz();
+
+    void print();
    
     Vectord operator*(Vectord& vec) override;
 
@@ -25,6 +26,6 @@ public:
     
 };
 
-
+#endif
 
 

@@ -1,9 +1,8 @@
 #include <iostream>
-#include <cmath>
-
 #include "SparseToeplitz.h"
-#include "Vectord.h"
-#include "ConjugatGradient.h"
+#include "ConjugateGradient.h"
+
+#include <vector>
 
 static double residual_norm(Matrix& A, const Vectord& b, Vectord& x)
 {
@@ -13,10 +12,18 @@ static double residual_norm(Matrix& A, const Vectord& b, Vectord& x)
     return r.norm();
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    // Problem size
-    const int n = 200;
+    // Problem size (can be set via command-line argument)
+    int n = 200;
+    if (argc > 1) {
+        int arg_n = std::atoi(argv[1]);
+        if (arg_n > 0) {
+            n = arg_n;
+        } else {
+            std::cerr << "Invalid problem size argument. Using default n = 200.\n";
+        }
+    }
 
     // Build A: 1D Laplacian Toeplitz (Dirichlet-style interior operator)
     // diagonals: -1, 0, +1 with values: -1, 2, -1
@@ -25,10 +32,20 @@ int main()
     double vals[numDiags] = {-1.0, 2.0, -1.0};
 
     SparseToeplitz A(n, n, numDiags, diags, vals);
+    A.print();
 
-    // b = ones
-    Vectord b(n);
-    b.fill(1.0);
+    //Vectord b(n);
+    //b.fill(5.0);
+    //b.PrintVector();
+
+    std::vector<double> b_data(n);
+    for (int i = 0; i < n; ++i)
+        b_data[i] = double(i*i + 3*i - 2);
+
+    Vectord b(b_data.data(), n);
+
+    b.PrintVector();
+
 
     // x0 = zeros
     Vectord x(n);
@@ -36,8 +53,8 @@ int main()
 
     // CG parameters
     const int maxIters = 5000;
-    const double relTol = 1e-10;
-    const double absTol = 0.0;
+    const double relTol = 1e-6;
+    const double absTol = 1e-6;
 
     std::cout << "Running CG on 1D Laplacian Toeplitz, n=" << n << "\n";
 
@@ -56,6 +73,8 @@ int main()
     std::cout << "CG iterations = " << iters << "\n";
     std::cout << "Final residual norm ||r|| = " << rf << "\n";
     std::cout << "Relative residual ||r||/||r0|| = " << (rf / (r0 > 0 ? r0 : 1.0)) << "\n";
+
+    x.PrintVector();
 
     return 0;
 }

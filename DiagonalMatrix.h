@@ -1,10 +1,7 @@
-#pragma once
+#ifndef DIAGONAL_MATRIX_H
+#define DIAGONAL_MATRIX_H
 
-#include <vector>
-#include <stdexcept>
-#include <iostream>
 #include "Matrix.h"
-#include "VectorD.h"
 
 class DiagonalMatrix : public Matrix 
 {
@@ -31,3 +28,4 @@ public:
 
 };
 
+#endif

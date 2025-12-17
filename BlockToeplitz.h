@@ -1,12 +1,7 @@
-#pragma once
-
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
+#ifndef BLOCKTOEPLITZ_H
+#define BLOCKTOEPLITZ_H
 
 #include "Matrix.h"
-#include "VectorD.h"
 
 class BlockToeplitz: public Matrix
 {
@@ -35,3 +30,4 @@ public:
    
 };
 
+#endif

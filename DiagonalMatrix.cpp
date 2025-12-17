@@ -1,12 +1,6 @@
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
-//#include "Vector.h"
-
-
 #include "DiagonalMatrix.h"
 
+#include <stdexcept>
 
 DiagonalMatrix::DiagonalMatrix(int size)
 {
@@ -29,7 +23,7 @@ DiagonalMatrix::DiagonalMatrix(DiagonalMatrix& other, double c)
 
 DiagonalMatrix::~DiagonalMatrix()
 {
-    delete Diag_Vals;
+    delete[] Diag_Vals;
 }
 
 // scalar multiplication

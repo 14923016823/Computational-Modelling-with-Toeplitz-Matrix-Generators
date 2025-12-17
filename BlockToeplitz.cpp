@@ -1,10 +1,7 @@
-#include <vector>
+#include "BlockToeplitz.h"
+
 #include <stdexcept>
 #include <iostream>
-//#include <tuple>
-//#include "Vector.h"
-
-#include "BlockToeplitz.h"
 
 
 // constructor
@@ -18,18 +15,20 @@ BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
     //Vals.resize(Num_Diags); 
 }
 
+
+
 BlockToeplitz::~BlockToeplitz()
 {
-    printf("delting blockToeplitz\n");
-    for(int i=0;i<Num_Diags;i++)
+    std::cout << "deleting BlockToeplitz\n";
+    for(int i = 0; i < Num_Diags; ++i)
     {
         delete Vals[i];
     }
-    delete Vals;
-    delete Diags;
+    delete[] Vals;
+    delete[] Diags;
 }
 
-// constructo
+// constructor
 
 //copy and scale constructor
 BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
@@ -82,7 +81,7 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
                     subinput.Vec[k] = vec.Vec[col_start + k]; 
                 }
                 Vectord subsubres = Vals[j]->operator*(subinput);
-                subres.Sum(subsubres);
+                subres.axpy(1.0, subsubres);
             }
         }
         // copy accumulated block into result
@@ -119,13 +118,11 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
 {
 
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
-    printf("num diags=%d\n",Num_Diags);
-    printf("vals[0],%d\n",Vals[0]);
-    for(int i;i<Num_Diags;i++)
+    std::cout << "num diags=" << Num_Diags << "\n";
+    for(int i = 0; i < Num_Diags; ++i)
     {
-        result->Diags[i]=Diags[i];
+        result->Diags[i] = Diags[i];
         result->Vals[i] = Vals[i]->Kronecker(B);
-        
     }
     return result;
 }

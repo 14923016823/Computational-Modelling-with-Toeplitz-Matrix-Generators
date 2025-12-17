@@ -1,8 +1,6 @@
 #ifndef VECTORD_H
 #define VECTORD_H
 
-#include <stdexcept>
-#include <iostream>
 
 class Vectord {
 public:
@@ -11,6 +9,7 @@ public:
 
     Vectord();
     explicit Vectord(int n);
+    Vectord(const double* data, int n);
 
     Vectord(const Vectord& other);
     Vectord(Vectord&& other) noexcept;
@@ -43,7 +42,7 @@ public:
     void axpby(double a, double b, const Vectord& x);
 };
 
-#endif // VECTORD_H
+#endif
 
 
 

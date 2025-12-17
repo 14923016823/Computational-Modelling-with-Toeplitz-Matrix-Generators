@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 Vectord::Vectord()
     : Length(0), Vec(nullptr)
@@ -12,6 +13,16 @@ Vectord::Vectord(int n)
     : Length(n), Vec(n > 0 ? new double[n] : nullptr)
 {
     std::fill(Vec, Vec + Length, 0.0);
+}
+
+Vectord::Vectord(const double* data, int n)
+    : Length(n), Vec(Length > 0 ? new double[Length] : nullptr)
+{
+    if (n < 0)
+        throw std::invalid_argument("Vectord::constructor negative size");
+    if (Length > 0 && data == nullptr)
+        throw std::invalid_argument("Vectord::constructor null data");
+    std::copy(data, data + Length, Vec);
 }
 
 Vectord::Vectord(const Vectord& other)
@@ -61,11 +72,13 @@ int Vectord::len() const
 
 void Vectord::PrintVector() const
 {
+    std::cout << "Vector (length " << Length << "):\n";
+    std::cout << "[";
     for (int i = 0; i < Length; ++i)
     {
-        printf("vec[%d]=%f\n", i, Vec[i]);
+        std::cout << std::setw(8) << std::fixed << std::setprecision(3) << Vec[i] << " ";
     }
-    printf("done\n");
+    std::cout << " ]\n" << std::endl;
 }
 
 double& Vectord::operator[](int i)
@@ -102,7 +115,7 @@ void Vectord::resize(int n)
 void Vectord::fill(double value)
 {
     if (Vec)
-    std::fill(Vec, Vec + Length, 0.0);
+    std::fill(Vec, Vec + Length, value);
 }
 
 double Vectord::dot(const Vectord& other) const
