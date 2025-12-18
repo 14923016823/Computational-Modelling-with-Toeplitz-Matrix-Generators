@@ -2,6 +2,10 @@
 
 #include <initializer_list>
 #include <memory>
+#include <omp.h>
+#include <cmath>
+#include <iostream>
+#include <exception>
 
 class Vectord
 {
@@ -15,6 +19,8 @@ public:
     int len();
 
     void print();
+
+    void PrintVector();
 
     void Sum(Vectord VecIn);
 };

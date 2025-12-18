@@ -1,9 +1,3 @@
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
-//#include "Vector.h"
-
 #include "BlockToeplitz.h"
 
 
@@ -15,7 +9,6 @@ BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
     Num_Diags = ndiags;
     Diags = new int[Num_Diags];
     Vals = new MatrixPointer[Num_Diags];
-    //Vals.resize(Num_Diags); 
 }
 
 BlockToeplitz::~BlockToeplitz()
@@ -97,8 +90,9 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
 
 void BlockToeplitz::operator*=(double c)
 {
-
-    for(int i=0;i<Num_Diags;i++)
+    int i;
+    #pragma omp parallel for private(i)
+    for(i=0;i<Num_Diags;i++)
     {
         (*Vals[i])*=c;
     }
@@ -111,7 +105,9 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
     printf("num diags=%d\n",Num_Diags);
     printf("vals[0],%d\n",Vals[0]);
-    for(int i;i<Num_Diags;i++)
+    int i;
+    #pragma omp parallel for private(i)
+    for(i=0;i<Num_Diags;i++)
     {
         result->Diags[i]=Diags[i];
         result->Vals[i] = Vals[i]->Kronecker(B);

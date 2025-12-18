@@ -1,10 +1,5 @@
 #pragma once
 
-#include <iostream>
-#include <exception>
-#include <cmath>
-#include <initializer_list>
-
 #include "Matrix.h"
 #include "VectorD.h"
 #include "SparseToeplitz.h"
@@ -20,6 +15,7 @@ public:
     int Num_Vals;
 
     //constructor
+    
     CSR(double* vals, int* cols, int* rows, int num_vals, int num_rows, int num_cols);
 
     CSR(CSR& other, double c);

@@ -21,7 +21,9 @@ Vectord COO::operator*(Vectord& vect)
     double value;
     int row_ind;
     int col_ind;
-    for(int i=0;i<Num_Vals;i++)
+    int i;
+    #pragma omp parallel for private(i, row_ind, col_ind, value)
+    for(i=0;i<Num_Vals;i++)
     {
         value = std::get<0>(Array[i]);
         row_ind = std::get<1>(Array[i]);
@@ -34,6 +36,7 @@ Vectord COO::operator*(Vectord& vect)
 COO::~COO()
 { 
     delete[] Array;
+    Array = nullptr;
 }
 
 void COO::print()
@@ -91,7 +94,9 @@ COO::COO(SparseToeplitz& ST)
 
 void COO::operator*=(double c) 
 {
-    for (int i=0;i<Num_Vals;i++)
+    int i;
+    #pragma omp parallel for private(i)
+    for (i=0;i<Num_Vals;i++)
     {
         std::get<0>(Array[i])*=c;
     }
@@ -104,7 +109,9 @@ COO::COO(COO& other,double c)
     Num_Cols=other.Num_Cols;
     Num_Vals=other.Num_Vals;
     Array = new tuple[Num_Vals];
-    for(int i=0;i<Num_Vals;i++)
+    int i;
+    #pragma omp parallel for private(i)
+    for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(Array[i])*=c;
     }
@@ -121,7 +128,9 @@ Matrix* COO::Kronecker(Matrix& B)
    
     BlockCOO* result = new BlockCOO(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     
-    for(int i=0;i<Num_Vals;i++)
+    int i;
+    #pragma omp parallel for private(i)
+    for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(result->Array[i])=B.Clone(std::get<0>(Array[i]));
         std::get<1>(result->Array[i])=std::get<1>(Array[i]);

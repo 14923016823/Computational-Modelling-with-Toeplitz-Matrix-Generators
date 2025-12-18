@@ -1,5 +1,7 @@
 #include "CSR.h"
 
+int T = 7;
+
 CSR::CSR(double* vals, int* cols, int* rows, int num_vals, int num_rows, int num_cols)
 {
     Vals = vals;
@@ -19,16 +21,27 @@ Vectord CSR::operator*(Vectord& vect)
     }
     Vectord result(Num_Rows);
     int c = 0;
-    int d = 0;
-    for(int i=0;i<Num_Rows;i++)
+    int d=0;
+    int i=0;
+    int j=0;
+    #pragma omp parallel for private(i,d,j) //shared(c) num_threads(T)
+    for(i=0;i<Num_Rows;i++)
     {
+        //printf(" i = %d\n",i);
+        //printf("%d\n",Rows[i+1]>Rows[i]);
         if(Rows[i+1]>Rows[i])
         {
             d = Rows[i+1]-Rows[i];
-            for(int j=0;j<d;j++)
+            #pragma omp critical //reduction(+ : result.Vec[i])
+            for(j=0;j<d;j++)
             {
+                c = Rows[i]+j;
+                //printf(" c = %d\n",c);
+                //printf("Cols[%d]=%d\n",c,Cols[c]);
+                //printf("vect[%d]=%f\n",Cols[c],vect.Vec[Cols[c]]);
                 result.Vec[i] += vect.Vec[Cols[c]]*Vals[c];
-                c++;
+                //printf("r[i]_j = %f\n",vect.Vec[Cols[c]]*Vals[c]);
+                //printf("r[i]_tot = %f\n",result.Vec[i]);
             }
         }
     }
@@ -41,10 +54,13 @@ CSR::~CSR()
     delete[] Vals;
     delete[] Rows;
     delete[] Cols;
+    Vals = nullptr;
+    Rows = nullptr;
+    Cols = nullptr;
 }
 
 void CSR::print()
-{
+{   
     std::cout << "Values: [";
     for(int i = 0;i<Num_Vals;i++)
     {
@@ -148,8 +164,9 @@ Matrix* CSR::Kronecker(Matrix& B)
 {
    
     BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
-    
-    for(int i=0;i<Num_Vals;i++)
+    int i;
+    //#pragma omp parallel for private(i)
+    for(i=0;i<Num_Vals;i++)
     {
         result->Cols[i]=Cols[i];
         result->Rows[i]=Rows[i];

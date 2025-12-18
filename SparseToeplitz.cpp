@@ -1,8 +1,6 @@
 #include "SparseToeplitz.h"
 #include "BlockToeplitz.h"
 #include "VectorD.h"
-#include <exception>
-#include <iostream>
     
 SparseToeplitz::SparseToeplitz(int num_rows, int num_cols, int length)
 {

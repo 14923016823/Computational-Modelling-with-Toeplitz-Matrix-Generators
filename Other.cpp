@@ -29,22 +29,52 @@ int main()
     Vectord y = A*x;
     y.print();
 
-    Vectord z(A*x);
+    Vectord z = A*x;
     z.print();
 
-    const int STlength = 3;
-    int STdiags[STlength] = {-2,-1,3};
-    double STvals[STlength] = {5,1,4};
-    int STwidth = 4;
-    int STheight = 3;
+    const int STlength = 1;
+    int STdiags[STlength] = {0};
+    double STvals[STlength] = {3};
+    int STwidth = 2;
+    int STheight = 2;
     SparseToeplitz C(STheight, STwidth, STlength, STdiags, STvals);
+    int Onediag[1] = {0};
+    double Oneval[1] = {1};
+    SparseToeplitz One(1,1,1,Onediag,Oneval);
     C.print();
+    One.print();
 
     CSR C_CSR(C);
     C_CSR.print();
 
+    CSR One_CSR(One);
+    One_CSR.print();
+
+    Matrix* Two = One.Kronecker(C);
+
+    Matrix* Two_CSR = One_CSR.Kronecker(C_CSR);
+
+    Vectord in = Vectord({2,5});
+
+    Vectord out = *Two*in;
+
+    Vectord out_CSR = *Two_CSR*in;
+
+    out.print();
+    out_CSR.print();
+
     COO C_COO(C);
     C_COO.print();
 
+int i;
+//omp_set_num_threads(2);
+#pragma omp parallel private(i) num_threads(7)             
+{
+    
+    i = omp_get_thread_num();
+    
+    printf("Hello World... from thread = %d\n", i);
+} 
+    
     return 0;
 }

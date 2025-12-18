@@ -1,11 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <exception>
-#include <cmath>
-#include <initializer_list>
 #include <tuple>
-#include <memory>
 
 typedef std::tuple<double,int,int> tuple;
 

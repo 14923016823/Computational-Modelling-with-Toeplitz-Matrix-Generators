@@ -1,10 +1,5 @@
 #pragma once
 
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
-
 #include "Matrix.h"
 #include "VectorD.h"
 
