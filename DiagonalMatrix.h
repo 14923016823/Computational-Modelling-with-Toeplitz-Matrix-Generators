@@ -29,5 +29,7 @@ public:
 
     Matrix* Kronecker(Matrix&) override;
 
+    Matrix* negativeTranspose();
+
 };
 

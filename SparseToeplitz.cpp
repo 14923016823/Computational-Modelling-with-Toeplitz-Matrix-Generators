@@ -3,6 +3,7 @@
 #include <iostream>
 //#include <tuple>
 //#include "Vector.h"
+#include <iomanip>
 
 #include "SparseToeplitz.h"
 #include "BlockToeplitz.h"
@@ -96,3 +97,33 @@ Matrix* SparseToeplitz::Clone(double c)
    return new SparseToeplitz(*this, c);
 }
 
+Matrix* SparseToeplitz::negativeTranspose()
+{
+    SparseToeplitz* negTrans = new SparseToeplitz(*this, -1.0);
+    return negTrans;
+}
+
+Matrix* SparseToeplitz::printFullMatrix()
+{
+    std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
+    for (int d = 0; d < Num_Diags; d++) {
+        for (int i = 0; i < Num_Rows; i++) {
+            int j = i + Diags[d];
+            if (j >= 0 && j < Num_Cols)
+                M[i][j] = Vals[d]; // stores diagonal value
+            
+            // if symmetric Toeplitz, uncomment this:
+            // if (Diags[d] > 0 && i - Diags[d] >= 0)
+            //    M[i][i - Diags[d]] = ValsD[d];
+        }
+    }
+
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+
+    for (int i = 0; i < Num_Rows; ++i) {
+        for (int j = 0; j < Num_Cols; ++j)
+            std::cout << std::setw(4) << std::left << M[i][j];
+        std::cout << "\n";
+    }
+    return nullptr;
+}

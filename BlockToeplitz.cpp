@@ -3,6 +3,7 @@
 #include <iostream>
 //#include <tuple>
 //#include "Vector.h"
+#include <iomanip>
 
 #include "BlockToeplitz.h"
 
@@ -128,3 +129,67 @@ Matrix* BlockToeplitz::Clone(double c)
 }
 
 
+Matrix* BlockToeplitz::negativeTranspose()
+{
+    BlockToeplitz* negTrans = new BlockToeplitz(*this, -1.0);
+    return negTrans;
+}
+
+double BlockToeplitz::operator()(int i, int j) const
+{
+    //determine which block we are in
+    int block_rows = Vals[0]->rows();
+    int block_cols = Vals[0]->cols();
+
+    int block_row = i / block_rows;
+    int block_col = j / block_cols;
+    int sub_i = i % block_rows;
+    int sub_j = j % block_cols;
+
+    //find which diagonal this is
+    int diag_index = block_col - block_row;
+    for (int k = 0; k < Num_Diags; k++) {
+        if (Diags[k] == diag_index) {
+            // Access the sub-matrix element
+            return (*Vals[k])(sub_i, sub_j);
+        }
+    }
+    return 0.0; // element is zero if not on any stored diagonal
+}
+
+Matrix* BlockToeplitz::printFullMatrix()
+{
+    //print function for full dense expansion
+    std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
+
+    int block_rows = Vals[0]->rows();
+    int block_cols = Vals[0]->cols();
+
+    for (int k = 0; k < Num_Diags; k++) {
+        for (int i = 0; i < Num_Rows; i++) {
+            for (int j = 0; j < Num_Cols; j++) {
+                int block_row = i / block_rows;
+                int block_col = j / block_cols;
+                int sub_i = i % block_rows;
+                int sub_j = j % block_cols;
+
+                if (block_col - block_row == Diags[k]) {
+                    // Access the sub-matrix element
+                    // Here we assume Vals[k] is a BlockToeplitz or similar with operator() defined
+                    // You may need to adjust this part based on your actual MatrixPointer implementation
+                    M[i][j] += static_cast<BlockToeplitz*>(Vals[k])->operator()(sub_i, sub_j);
+                }
+            }
+        }
+    }
+
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+
+    for (int i = 0; i < Num_Rows; ++i) {
+        for (int j = 0; j < Num_Cols; ++j)
+            std::cout << std::setw(4) << std::left << M[i][j];
+        std::cout << "\n";
+    }
+
+    return nullptr; // Adjust return type as needed
+}

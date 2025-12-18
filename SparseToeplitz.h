@@ -21,8 +21,12 @@ public:
     void operator*=(double c) override;
    
     Matrix* Kronecker(Matrix& B) override;
-    Matrix* Clone(double c) override;
     
+    Matrix* Clone(double c) override;
+
+    Matrix* negativeTranspose() override;
+    
+    Matrix* printFullMatrix() override;
 };
 
 

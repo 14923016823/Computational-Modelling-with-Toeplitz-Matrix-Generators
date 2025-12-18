@@ -66,3 +66,9 @@ Matrix* DiagonalMatrix::Kronecker(Matrix&)
     throw std::runtime_error("Kronecker not implemented for DiagonalMatrix");
 }
 
+Matrix* DiagonalMatrix::negativeTranspose()
+{
+    // For diagonal matrix, negative transpose is just negative of itself
+    DiagonalMatrix* negTrans = new DiagonalMatrix(*this, -1.0);
+    return negTrans;
+}

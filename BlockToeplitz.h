@@ -32,6 +32,12 @@ public:
 
     //Returns a cloned and scaled version of 
     Matrix* Clone(double c) override;
+
+    Matrix* negativeTranspose() override;
+
+    Matrix* printFullMatrix() override;
+
+    double operator()(int i, int j) const override;
    
 };
 
