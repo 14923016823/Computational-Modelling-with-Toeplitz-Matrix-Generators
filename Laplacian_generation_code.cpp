@@ -232,7 +232,7 @@ class Laplacian2D_ToeplitzMatrix {
         
         //     b.) Compute negative transposes
         
-
+        columnBlockMatrix.printFullMatrix();
         (*lowerIncidenceMatrix).printFullMatrix();
 
         //negTransposeUpperBlock.PrintFullToeplitz();
@@ -299,7 +299,7 @@ class Laplacian2D_ToeplitzMatrix {
 //=============================== Main function ========================================
 int main() {
     int rows = 3;
-    int cols = 5;
+    int cols = 3;
     
     //Laplacian2D_FullMatrix laplacian(rows, cols);
     Laplacian2D_ToeplitzMatrix laplacian_toeplitz(rows, cols);

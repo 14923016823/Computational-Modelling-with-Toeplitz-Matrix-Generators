@@ -21,13 +21,13 @@ BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
 
 BlockToeplitz::~BlockToeplitz()
 {
-    printf("delting blockToeplitz\n");
+    printf("deleting blockToeplitz\n");
     for(int i=0;i<Num_Diags;i++)
     {
         delete Vals[i];
     }
-    delete Vals;
-    delete Diags;
+    delete[] Vals; // added square brackets -Lucas
+    delete[] Diags; // added square brackets -Lucas
 }
 
 // constructo
@@ -37,7 +37,7 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
 {
 
     Num_Rows=other.Num_Rows;
-    Num_Cols=other.Num_Rows;
+    Num_Cols=other.Num_Cols; // changed Num_Rows to Num_Cols -Lucas
     Num_Diags=other.Num_Diags;
     Diags=new int[Num_Diags];
     Vals = new MatrixPointer[Num_Diags];
@@ -112,10 +112,10 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
     printf("num diags=%d\n",Num_Diags);
     printf("vals[0],%d\n",Vals[0]);
-    for(int i;i<Num_Diags;i++)
+    for(int i=0; i<Num_Diags; i++)
     {
         result->Diags[i]=Diags[i];
-        result->Vals[i] = Vals[i]->Kronecker(B);
+        result->Vals[i] = Vals[i]->Clone(1.0)->Kronecker(B);
         
     }
     return result;
@@ -177,7 +177,7 @@ Matrix* BlockToeplitz::printFullMatrix()
                     // Access the sub-matrix element
                     // Here we assume Vals[k] is a BlockToeplitz or similar with operator() defined
                     // You may need to adjust this part based on your actual MatrixPointer implementation
-                    M[i][j] += static_cast<BlockToeplitz*>(Vals[k])->operator()(sub_i, sub_j);
+                    M[i][j] += (*Vals[k])(sub_i, sub_j);
                 }
             }
         }

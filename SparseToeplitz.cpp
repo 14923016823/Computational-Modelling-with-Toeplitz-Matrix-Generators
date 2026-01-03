@@ -42,8 +42,8 @@ SparseToeplitz::SparseToeplitz(SparseToeplitz& other, double c)
 SparseToeplitz::~SparseToeplitz()
 {
     printf("delting blockToeplitz\n");
-    delete Vals;
-    delete Diags;
+    delete[] Vals; // added square brackets -Lucas
+    delete[] Diags; // added square brackets -Lucas
 }
  
 Vectord SparseToeplitz::operator*(Vectord& vec)
