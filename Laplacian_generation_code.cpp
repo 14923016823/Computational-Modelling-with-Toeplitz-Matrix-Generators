@@ -223,22 +223,32 @@ class Laplacian2D_ToeplitzMatrix {
 
         //     b.) Column block matrix kronecker product with identity matrix (cols)
         Matrix* lowerIncidenceMatrix = columnBlockMatrix.Kronecker(identityMatrixCols);
-        Matrix* columnBlockMatrixTranspose = columnBlockMatrix.negativeTranspose();
-        Matrix* lowerIncidenceMatrixTranspose = (*columnBlockMatrixTranspose).Kronecker(identityMatrixCols);
+        
 
         // 3.) Final Laplacian matrix assembly
         //     a.) Concatenate upper and lower incidence matrices
-        
+        //          --not required--
         
         //     b.) Compute negative transposes
-        
-        columnBlockMatrix.printFullMatrix();
-        (*lowerIncidenceMatrix).printFullMatrix();
+        Matrix* negTransposeColumnBlockMatrix = columnBlockMatrix.negativeTranspose();
+        Matrix* lowerIncidenceMatrixTranspose = (*negTransposeColumnBlockMatrix).Kronecker(identityMatrixCols);
+
+        Matrix* negTransposeUpperBlock = rowBlockMatrix.negativeTranspose();
+        SparseToeplitz* negPtr = static_cast<SparseToeplitz*>(negTransposeColumnBlockMatrix);
+
+        (*negTransposeColumnBlockMatrix).printFullMatrix();
 
         //negTransposeUpperBlock.PrintFullToeplitz();
 
         //     c.) Multiply incidence matrix with its negative transpose to get Laplacian
-            SparseToeplitz upperIncidenceBlock = SparseToeplitz(rows, rows, 3);
+            SparseToeplitz upperIncidenceBlock = SparseToeplitz(rows, rows, 5);
+            upperIncidenceBlock.Diags[0] = -(rows - 1);
+            upperIncidenceBlock.Diags[1] = -1;
+            upperIncidenceBlock.Diags[2] = 0;
+            upperIncidenceBlock.Diags[3] = 1;
+            upperIncidenceBlock.Diags[4] = (rows - 1);
+            upperIncidenceBlock.Vals[0] = negPtr->Vals[1] * columnBlockMatrix.Vals[1];
+            upperIncidenceBlock.Vals[1] = negPtr->Vals[2] * columnBlockMatrix.Vals[1];
 
             // For "upper incidence matrix" per block, matrix product:
             // cols = number of columns in original mesh grid

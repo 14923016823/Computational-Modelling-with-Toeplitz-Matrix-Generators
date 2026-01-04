@@ -44,7 +44,8 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
     for(int i=0;i<Num_Diags;i++)
     {
         Diags[i]=other.Diags[i];
-        Vals[i]=other.Clone(c);
+        // clone each stored sub-matrix (use the actual Vals[] clone)
+        Vals[i]=other.Vals[i]->Clone(c);
     }
 
 }
@@ -111,7 +112,7 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
 
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
     printf("num diags=%d\n",Num_Diags);
-    printf("vals[0],%d\n",Vals[0]);
+    printf("vals[0]=%p\n", (void*)Vals[0]);
     for(int i=0; i<Num_Diags; i++)
     {
         result->Diags[i]=Diags[i];
@@ -131,7 +132,15 @@ Matrix* BlockToeplitz::Clone(double c)
 
 Matrix* BlockToeplitz::negativeTranspose()
 {
-    BlockToeplitz* negTrans = new BlockToeplitz(*this, -1.0);
+    // Create a new BlockToeplitz that represents the negative transpose
+    BlockToeplitz* negTrans = new BlockToeplitz(Num_Cols, Num_Rows, Num_Diags);
+    // Reverse and negate diagonals, and negative-transpose each sub-block
+    for (int d = 0; d < Num_Diags; ++d) {
+        int src = Num_Diags - 1 - d;
+        negTrans->Diags[d] = -Diags[src];
+        // call negativeTranspose on the sub-block (returns Matrix*)
+        negTrans->Vals[d] = Vals[src]->negativeTranspose();
+    }
     return negTrans;
 }
 
@@ -157,7 +166,7 @@ double BlockToeplitz::operator()(int i, int j) const
     return 0.0; // element is zero if not on any stored diagonal
 }
 
-Matrix* BlockToeplitz::printFullMatrix()
+/*Matrix* BlockToeplitz::printFullMatrix()
 {
     //print function for full dense expansion
     std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
@@ -166,6 +175,11 @@ Matrix* BlockToeplitz::printFullMatrix()
     int block_cols = Vals[0]->cols();
 
     for (int k = 0; k < Num_Diags; k++) {
+        if (Vals[k]->rows() != block_rows ||
+        Vals[k]->cols() != block_cols) {
+        throw std::logic_error("BlockToeplitz::printFullMatrix: inconsistent block sizes");
+        }
+
         for (int i = 0; i < Num_Rows; i++) {
             for (int j = 0; j < Num_Cols; j++) {
                 int block_row = i / block_rows;
@@ -192,4 +206,52 @@ Matrix* BlockToeplitz::printFullMatrix()
     }
 
     return nullptr; // Adjust return type as needed
+}*/
+
+Matrix* BlockToeplitz::printFullMatrix() {
+    std::vector<std::vector<double>> M(
+        Num_Rows, std::vector<double>(Num_Cols, 0.0));
+
+    int br = Vals[0]->rows();
+    int bc = Vals[0]->cols();
+
+    for (int k = 0; k < Num_Diags; k++) {
+        if (Vals[k]->rows() != br || Vals[k]->cols() != bc) {
+            throw std::logic_error("Inconsistent block sizes in BlockToeplitz");
+        }
+    }
+
+    int num_block_rows = Num_Rows / br;
+    int num_block_cols = Num_Cols / bc;
+
+    for (int block_row = 0; block_row < num_block_rows; block_row++) {
+        for (int block_col = 0; block_col < num_block_cols; block_col++) {
+
+            int diag = block_col - block_row;
+
+            for (int k = 0; k < Num_Diags; k++) {
+                if (Diags[k] == diag) {
+
+                    for (int i = 0; i < br; i++) {
+                        for (int j = 0; j < bc; j++) {
+
+                            int I = block_row * br + i;
+                            int J = block_col * bc + j;
+
+                            M[I][J] += (*Vals[k])(i, j);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+    for (int i = 0; i < Num_Rows; ++i) {
+        for (int j = 0; j < Num_Cols; ++j)
+            std::cout << std::setw(4) << M[i][j];
+        std::cout << "\n";
+    }
+
+    return nullptr;
 }

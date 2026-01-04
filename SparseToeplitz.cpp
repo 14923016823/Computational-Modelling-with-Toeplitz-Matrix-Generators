@@ -41,7 +41,7 @@ SparseToeplitz::SparseToeplitz(SparseToeplitz& other, double c)
 
 SparseToeplitz::~SparseToeplitz()
 {
-    printf("delting blockToeplitz\n");
+    printf("deleting sparseToeplitz\n");
     delete[] Vals; // added square brackets -Lucas
     delete[] Diags; // added square brackets -Lucas
 }
@@ -88,8 +88,20 @@ Matrix* SparseToeplitz::Kronecker(Matrix& B)
         result->Vals[i] = B.Clone(Vals[i]);   
     }
     
-    printf("vals[i],%f\n",result->Vals);
+    printf("vals pointer=%p\n", (void*)result->Vals);
     return result;
+}
+
+double SparseToeplitz::operator()(int i, int j) const
+{
+    if (i < 0 || i >= Num_Rows || j < 0 || j >= Num_Cols)
+        return 0.0;
+    int diag = j - i;
+    for (int d = 0; d < Num_Diags; ++d) {
+        if (Diags[d] == diag)
+            return Vals[d];
+    }
+    return 0.0;
 }
 
 Matrix* SparseToeplitz::Clone(double c)
@@ -99,7 +111,15 @@ Matrix* SparseToeplitz::Clone(double c)
 
 Matrix* SparseToeplitz::negativeTranspose()
 {
-    SparseToeplitz* negTrans = new SparseToeplitz(*this, -1.0);
+    // The negative transpose of a (Num_Rows x Num_Cols) Toeplitz matrix
+    // is a (Num_Cols x Num_Rows) matrix where each diagonal k becomes -k
+    // and the order of stored diagonals must be reversed to remain sorted ascending.
+    SparseToeplitz* negTrans = new SparseToeplitz(Num_Cols, Num_Rows, Num_Diags);
+    for (int d = 0; d < Num_Diags; ++d) {
+        // reverse order and negate diagonal offsets and values
+        negTrans->Diags[d] = -Diags[Num_Diags - 1 - d];
+        negTrans->Vals[d] = -Vals[Num_Diags - 1 - d];
+    }
     return negTrans;
 }
 
