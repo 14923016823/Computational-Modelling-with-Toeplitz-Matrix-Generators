@@ -29,19 +29,23 @@ int main()
     Vectord y = A*x;
     y.print();
 
-    Vectord z = A*x;
+    Vectord z = B*x;
     z.print();
 
-    const int STlength = 1;
-    int STdiags[STlength] = {0};
-    double STvals[STlength] = {3};
-    int STwidth = 2;
-    int STheight = 2;
+    const int STlength = 3;
+    int STdiags[STlength] = {-2,-1,3};
+    double STvals[STlength] = {5,1,4};
+    int STwidth = 4;
+    int STheight = 4;
     SparseToeplitz C(STheight, STwidth, STlength, STdiags, STvals);
+    C.print();
+
+    Vectord a = C*x;
+    a.print();
+    
     int Onediag[1] = {0};
     double Oneval[1] = {1};
     SparseToeplitz One(1,1,1,Onediag,Oneval);
-    C.print();
     One.print();
 
     CSR C_CSR(C);
@@ -50,31 +54,31 @@ int main()
     CSR One_CSR(One);
     One_CSR.print();
 
-    Matrix* Two = One.Kronecker(C);
+    Matrix* Two = C.Kronecker(One);
+    std::cout << (*Two).cols() << std::endl;
 
     Matrix* Two_CSR = One_CSR.Kronecker(C_CSR);
+    *Two_CSR *= 2;
 
-    Vectord in = Vectord({2,5});
+    Vectord in = Vectord({0,1,2,3});
 
     Vectord out = *Two*in;
 
     Vectord out_CSR = *Two_CSR*in;
 
+    Matrix* Two_BT = One.Kronecker(C);
+    *Two_BT *= 3;
+
+    Vectord out_BT = *Two_BT*in;
+
     out.print();
     out_CSR.print();
+    out_BT.print();
 
     COO C_COO(C);
     C_COO.print();
 
 int i;
-//omp_set_num_threads(2);
-#pragma omp parallel private(i) num_threads(7)             
-{
-    
-    i = omp_get_thread_num();
-    
-    printf("Hello World... from thread = %d\n", i);
-} 
-    
+   
     return 0;
 }

@@ -49,7 +49,7 @@ void Vectord::Sum(Vectord VecIn)
         throw std::invalid_argument("You can't sum vectors with different sizes");
     }
     int i;
-    #pragma omp for private(i)
+    //#pragma omp for private(i)
     for(int i=0;i<Length;i++)
     {
         Vec[i]+=VecIn.Vec[i];

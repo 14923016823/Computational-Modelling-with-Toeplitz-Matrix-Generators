@@ -48,11 +48,14 @@ Vectord SparseToeplitz::operator*(Vectord& vec)
     {
         throw std::invalid_argument("Vector and Matrix size dont match");
     }
-    Vectord result = Vectord(len);
-    #pragma omp parallel for
-    for (int i = 0;i < Num_Rows;i++) 
+    Vectord result = Vectord(Num_Rows);
+    int q;
+    int j;
+    int i;
+    #pragma omp parallel for private(q,j,i)
+    for (i = 0;i < Num_Rows;i++) //This always completes the j-loop before moving on to the next i, so seems besically sequential
     {
-        for (int j = 0;j < Num_Diags;j++) 
+        for (j = 0;j < Num_Diags;j++) 
         {
             if (Diags[j] + i >= 0 && Diags[j] + i < len)
             {
@@ -103,7 +106,7 @@ Matrix* SparseToeplitz::Kronecker(Matrix& B)
         result->Vals[i] = B.Clone(Vals[i]);   
     }
     
-    printf("vals[i],%f\n",result->Vals);
+    //printf("vals[i],%f\n",result->Vals);
     return result;
 }
 

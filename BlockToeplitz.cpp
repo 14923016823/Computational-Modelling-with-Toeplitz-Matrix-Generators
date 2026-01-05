@@ -57,13 +57,19 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
     int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
 
     Vectord result(Num_Rows);
+    //int i;
+    #pragma omp parallel for //private(i)
     for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
     {
+        //int i = omp_get_thread_num();
+    
+        //printf("Hello World... from thread = %d\n", i);
         //int row = blockrow *;
         Vectord subres(Num_Rows_SubMatrixes); // initialized to zeros
         // accumulate contributions from each diagonal/block
         for (int j = 0; j < Num_Diags; j++)
         {
+            //printf("i=%d, j=%d\n", i,j);
             int blockcol = Diags[j] + blockrow;
             // ensure the whole sub-block fits in input vector
             if (blockcol >= 0 && blockcol<Num_blockcols)
@@ -106,7 +112,7 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
     printf("num diags=%d\n",Num_Diags);
     printf("vals[0],%d\n",Vals[0]);
     int i;
-    #pragma omp parallel for private(i)
+#pragma omp parallel for private(i)
     for(i=0;i<Num_Diags;i++)
     {
         result->Diags[i]=Diags[i];

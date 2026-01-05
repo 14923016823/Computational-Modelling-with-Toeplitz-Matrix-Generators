@@ -4,6 +4,7 @@
 
 #include "Matrix.h"
 #include "VectorD.h"
+#include "BlockToeplitz.h"
 
 typedef std::tuple<MatrixPointer,int,int> mtuple;
 

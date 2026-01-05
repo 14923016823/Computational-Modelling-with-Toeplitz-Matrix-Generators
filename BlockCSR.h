@@ -2,6 +2,7 @@
 
 #include "Matrix.h"
 #include "VectorD.h"
+#include "BlockToeplitz.h"
 
 class BlockCSR: public Matrix
 {
