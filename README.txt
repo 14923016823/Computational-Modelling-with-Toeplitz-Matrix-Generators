@@ -1,0 +1,2 @@
+An installation of Visual Studio 2022, or an installation of Visual Studio Build Tools 2022, is required to perform the roofline analysis.
+An installation of Intel Advisor is required to perform the roofline analysis.
