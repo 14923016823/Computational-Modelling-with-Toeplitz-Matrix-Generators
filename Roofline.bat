@@ -29,7 +29,7 @@ for %%i in ("%FULL_CPP_PATH%") do (
 cd /d "%SOURCE_DIR%"
 
 set EXE_NAME=%FILE_NAME%.exe
-set PROJ_DIR=.\Advisor_Results_%FILE_NAME%
+set PROJ_DIR=.\%FILE_NAME%_Advisor
 
 :: --- STEP 3: INITIALIZE VISUAL STUDIO & ONEAPI ---
 echo [1/3] Initializing Environments...
