@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import re
 import matplotlib.pyplot as plt
 import numpy as np
+import sys
 
 def parse_advisor_xml(path):
     if not os.path.exists(path):
@@ -54,7 +55,11 @@ def parse_advisor_xml(path):
 
     return CPUmodel, df_roofs, df_metrics
 
-path = input("FULL path to the analysis directory: ").strip().strip('"')
+if len(sys.argv) > 1:
+    path = sys.argv[1]
+else:
+    path = input("FULL path to the analysis directory (e000/hs000): ").strip().strip('"')
+
 CPUmodel, df_roofs, df_metrics = parse_advisor_xml(path)
 
 # --- 1. Setup Helper to Extract Values ---
