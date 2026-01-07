@@ -26,7 +26,7 @@ public:
    
 
     void operator*=(double c) override;
-    
+
 
     Matrix* Kronecker(Matrix& B) override;
 
@@ -36,6 +36,8 @@ public:
     Matrix* negativeTranspose() override;
 
     Matrix* printFullMatrix() override;
+
+    Matrix* Add(Matrix& other) override;
 
     double operator()(int i, int j) const override;
    

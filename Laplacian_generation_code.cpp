@@ -187,18 +187,19 @@ class Laplacian2D_ToeplitzMatrix {
         //RecursiveToeplitz LaplacianMatrix = RecursiveToeplitz(2, 1, 1, 1, 2); //initialize empty matrix
     }
     
-    //Function to pring the laplacian matrix
-    /*void PrintLaplacianMatrix(const RecursiveToeplitz& laplacian) {
-    
-    }*/
-    
     private:
     void generateMatrix(const int rows, const int cols) {
         // Implementation for generating the Laplacian matrix
 
+        // The "matrix multiplication" between the negative transpose of the incidence matrix and the incidence matrix itself is split between the
+        // contrubution of the upper part (desribing the influence of the row connections) and the lower part (describing the influence of the
+        // column connections). This is done to exploit the Kronecker product structure of the incidence matrices and avoid forming the full
+        // incidence matrix.
+
+
         // 1.)Upper incidence matrix generation
         //     a.) Row block matrix generation
-        SparseToeplitz rowBlockMatrix = SparseToeplitz(cols, cols, 3); //leaf matrix with 3 diagonals
+        SparseToeplitz rowBlockMatrix = SparseToeplitz(cols, cols, 3); //leaf row block matrix with 3 diagonals
         rowBlockMatrix.Diags[0] = -(cols - 1);
         rowBlockMatrix.Diags[1] = 0;
         rowBlockMatrix.Diags[2] = 1;
@@ -206,14 +207,15 @@ class Laplacian2D_ToeplitzMatrix {
         rowBlockMatrix.Vals[1] = -1;
         rowBlockMatrix.Vals[2] = 1;
 
-        //     b.) Identity matrix generation for lower incidence matrix
-        SparseToeplitz identityMatrixCols(cols, cols, 1); //leaf identity matrix
-        identityMatrixCols.Diags[0] = 0;
-        identityMatrixCols.Vals[0] = 1;
+        //     b.) Identity matrices generation for upper incidence matrix
+        SparseToeplitz identityMatrixRows = SparseToeplitz(rows, rows, 1); //leaf identity matrix
+        identityMatrixRows.Diags[0] = 0;
+        identityMatrixRows.Vals[0] = 1;
+
 
         // 2.) Lower incidence matrix generation
         //     a.) Column block matrix generation
-        SparseToeplitz columnBlockMatrix(rows, rows, 3); //leaf matrix with 3 diagonals
+        SparseToeplitz columnBlockMatrix(rows, rows, 3); //leaf column block matrix with 3 diagonals
         columnBlockMatrix.Diags[0] = -(rows - 1);
         columnBlockMatrix.Diags[1] = 0;
         columnBlockMatrix.Diags[2] = 1;
@@ -221,85 +223,65 @@ class Laplacian2D_ToeplitzMatrix {
         columnBlockMatrix.Vals[1] = -1;
         columnBlockMatrix.Vals[2] = 1;
 
-        //     b.) Column block matrix kronecker product with identity matrix (cols)
-        Matrix* lowerIncidenceMatrix = columnBlockMatrix.Kronecker(identityMatrixCols);
-        
+        //     b.) Identity matrix generation for lower incidence matrix
+        SparseToeplitz identityMatrixCols(cols, cols, 1); //leaf identity matrix
+        identityMatrixCols.Diags[0] = 0;
+        identityMatrixCols.Vals[0] = 1;
+
+        //     c.) Column block matrix kronecker product with identity matrix (cols)
+        Matrix* lowerIncidenceMatrix = columnBlockMatrix.Kronecker(identityMatrixCols); // lower incidence matrix
+        BlockToeplitz* lowerIncidencePtr = static_cast<BlockToeplitz*>(lowerIncidenceMatrix);  //cast to BlockToeplitz pointer for further operations
+
 
         // 3.) Final Laplacian matrix assembly
         //     a.) Concatenate upper and lower incidence matrices
         //          --not required--
         
         //     b.) Compute negative transposes
-        Matrix* negTransposeColumnBlockMatrix = columnBlockMatrix.negativeTranspose();
-        Matrix* lowerIncidenceMatrixTranspose = (*negTransposeColumnBlockMatrix).Kronecker(identityMatrixCols);
-
-        Matrix* negTransposeUpperBlock = rowBlockMatrix.negativeTranspose();
-        SparseToeplitz* negPtr = static_cast<SparseToeplitz*>(negTransposeColumnBlockMatrix);
-
-        (*negTransposeColumnBlockMatrix).printFullMatrix();
-
-        //negTransposeUpperBlock.PrintFullToeplitz();
+        Matrix* negTransposeUpperBlock = rowBlockMatrix.negativeTranspose(); // negative transpose of the row block matrix
+        SparseToeplitz* negPtr = static_cast<SparseToeplitz*>(negTransposeUpperBlock); //cast to SparseToeplitz pointer for further operations
+        
+        Matrix* negTransposeColumnBlockMatrix = columnBlockMatrix.negativeTranspose(); // negative transpose of the column block matrix
+        Matrix* lowerIncidenceMatrixTranspose = (*negTransposeColumnBlockMatrix).Kronecker(identityMatrixCols); // negative transpose of the lower incidence matrix
+        BlockToeplitz* lowerPtr = static_cast<BlockToeplitz*>(lowerIncidenceMatrixTranspose); //cast to BlockToeplitz pointer for further operations
 
         //     c.) Multiply incidence matrix with its negative transpose to get Laplacian
-            SparseToeplitz upperIncidenceBlock = SparseToeplitz(rows, rows, 5);
-            upperIncidenceBlock.Diags[0] = -(rows - 1);
-            upperIncidenceBlock.Diags[1] = -1;
-            upperIncidenceBlock.Diags[2] = 0;
-            upperIncidenceBlock.Diags[3] = 1;
-            upperIncidenceBlock.Diags[4] = (rows - 1);
-            upperIncidenceBlock.Vals[0] = negPtr->Vals[1] * columnBlockMatrix.Vals[1];
-            upperIncidenceBlock.Vals[1] = negPtr->Vals[2] * columnBlockMatrix.Vals[1];
+        SparseToeplitz upperIncidenceBlock = SparseToeplitz(rows, rows, 5); // upper incidence block matrix with 5 diagonals
+        upperIncidenceBlock.Diags[0] = -(rows - 1);
+        upperIncidenceBlock.Diags[1] = -1;
+        upperIncidenceBlock.Diags[2] = 0;
+        upperIncidenceBlock.Diags[3] = 1;
+        upperIncidenceBlock.Diags[4] = (rows - 1);
+        upperIncidenceBlock.Vals[0] = negPtr->Vals[1] * columnBlockMatrix.Vals[2];
+        upperIncidenceBlock.Vals[1] = negPtr->Vals[2] * columnBlockMatrix.Vals[1];
+        upperIncidenceBlock.Vals[2] = negPtr->Vals[1] * columnBlockMatrix.Vals[1] + negPtr->Vals[2] * columnBlockMatrix.Vals[0];
+        upperIncidenceBlock.Vals[3] = negPtr->Vals[0] * columnBlockMatrix.Vals[1];
+        upperIncidenceBlock.Vals[4] = negPtr->Vals[0] * columnBlockMatrix.Vals[1];
 
-            // For "upper incidence matrix" per block, matrix product:
-            // cols = number of columns in original mesh grid
-            //  - Main diagonal:
-            // result[i,i] = blockT[i,i]*block[i,i] + blockT[i+1,i]*block[i,i+1] for i in [0,cols-2]
-            // result[cols-1,cols-1] = blockT[cols-1,cols-1]*block[cols-1,0] + block[cols-1,cols-1]*blockT[cols-1,cols-1]
+        Matrix* upperIncidenceLaplacian = identityMatrixRows.Kronecker(upperIncidenceBlock); // upper incidence Laplacian matrix
+        BlockToeplitz* upperIncidencePtr = static_cast<BlockToeplitz*>(upperIncidenceLaplacian); //cast to BlockToeplitz pointer for further operations
 
-            /*for (int i=0; i<cols; i++) {
-                upperIncidenceBlock.Vals[0] = negTransposeUpperBlock.Vals[i]*rowBlockMatrix.Vals[i] + negTransposeUpperBlock[];*/
+        SparseToeplitz lowerIncidenceLaplacian = SparseToeplitz(rows, rows, 1); // lower incidence Laplacian block matrix with 1 diagonal
+        lowerIncidenceLaplacian.Diags[0] = 0;
+        { // computing product of lower incidence matrix with its negative transpose
+            BlockToeplitz* L = lowerPtr;
+            BlockToeplitz* LI = lowerIncidencePtr;
+            SparseToeplitz* A = dynamic_cast<SparseToeplitz*>(L->Vals[1]);
+            SparseToeplitz* B = dynamic_cast<SparseToeplitz*>(LI->Vals[1]);
+            SparseToeplitz* C = dynamic_cast<SparseToeplitz*>(L->Vals[2]);
+            SparseToeplitz* D = dynamic_cast<SparseToeplitz*>(LI->Vals[0]);
+            if (!A || !B || !C || !D) {
+                throw std::logic_error("expected SparseToeplitz leaf blocks in lower incidence matrices");
+            }
+            // Use index 0 for leaf blocks (they each have a single diagonal stored at index 0)
+            lowerIncidenceLaplacian.Vals[0] = A->Vals[0] * B->Vals[0] + C->Vals[0] * D->Vals[0];
+        }
+
+        Matrix* laplacianMatrix = (*upperIncidencePtr).Add(lowerIncidenceLaplacian);
+        BlockToeplitz& laplacianPtr = *static_cast<BlockToeplitz*>(laplacianMatrix);
+        // resulting matrix is the Laplacian matrix with Dirichlet boundary conditions
+        laplacianPtr.printFullMatrix();
             
-
-            
-            //  - First upper diagonal:
-            // result[i,i+1] = blockT[i,i]*block[i,i+1] for i in [0,cols-2]
-
-            //  - Last upper diagonal:
-            // result[0,cols-1] = blockT[0,cols-1]*block[cols-1,cols-1]
-
-            //  - First lower diagonal:
-            // result[i+1,i] = blockT[i+1,i]*block[i,i] for i in [0,cols-2]
-
-            // - Last lower diagonal:
-            // result[cols-1,0] = blockT[cols-1,cols-1]*block[0,cols-1]
-
-                // The result matrix here will be of size cols x cols, and can be kronecker-multiplied with
-                // identity matrix (rows) to get the full upper incidence contribution to the Laplacian.
-
-
-            //For "lower incidence matrix":
-            // rows = number of rows in original mesh grid
-            // length = rows*rows
-            // - Main diagonal:
-            // result[i,i] = blockT[i,i]*block[i,i] + blockT[i,i+2*cols]*block[i+2*cols,i] for i in [0,cols-1]
-            // result[i,i] = blockT[i,i-cols]*block[i-cols,i] + blockT[i,i]*block[i,i] for i in [cols,length-1]
-
-            // - First upper diagonal:
-            // result[i,i+rows] = block[i,i+rows]*blockT[i,i] for i in [0,2*rows-1]
-
-            // - Second upper diagonal:
-            // result[i,2*rows+i] = block[i+2*rows,i+2*rows]*blockT[i,i+2*rows] for i in [0,rows-1]
-
-            // - First lower diagonal:
-            // result[i+rows,i] = block[i,i]*blockT[i+rows,i] for i in [0,2*rows-1]
-
-            // - Second lower diagonal:
-            // result[2*rows+i,i] = block[i,i+2*rows]*blockT[i+2*rows,i+2*rows] for i in [0,rows-1]
-
-                // The result matrix here wils be of size length x length, and can be directly added to the
-                // upper incidence contribution to get the full Laplacian matrix.
-
-
         //     d.) Store as RecursiveToeplitz matrix
 
     }
@@ -308,8 +290,8 @@ class Laplacian2D_ToeplitzMatrix {
 
 //=============================== Main function ========================================
 int main() {
-    int rows = 3;
-    int cols = 3;
+    int rows = 4;
+    int cols = 4;
     
     //Laplacian2D_FullMatrix laplacian(rows, cols);
     Laplacian2D_ToeplitzMatrix laplacian_toeplitz(rows, cols);

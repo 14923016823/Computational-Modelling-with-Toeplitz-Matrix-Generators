@@ -27,6 +27,7 @@ public:
     Matrix* negativeTranspose() override;
     
     Matrix* printFullMatrix() override;
+    Matrix* Add(Matrix& other) override;
     
     double operator()(int i, int j) const override;
 };

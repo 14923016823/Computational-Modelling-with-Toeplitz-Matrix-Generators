@@ -6,6 +6,8 @@
 #include <iomanip>
 
 #include "BlockToeplitz.h"
+#include <algorithm>
+#include "SparseToeplitz.h"
 
 
 // constructor
@@ -106,6 +108,7 @@ void BlockToeplitz::operator*=(double c)
     }
         
 }
+
 
 Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bottom of the chain every Num_Rows needs to be changed
 {
@@ -254,4 +257,80 @@ Matrix* BlockToeplitz::printFullMatrix() {
     }
 
     return nullptr;
+}
+
+Matrix* BlockToeplitz::Add(Matrix& other)
+{
+    // If other is a BlockToeplitz, handle directly.
+    BlockToeplitz* o = dynamic_cast<BlockToeplitz*>(&other);
+    if (!o) {
+        // If other is a SparseToeplitz, lift it to a BlockToeplitz (identity kronecker)
+        SparseToeplitz* s = dynamic_cast<SparseToeplitz*>(&other);
+        if (s) {
+            // create a temporary BlockToeplitz that represents identity kron with s
+            BlockToeplitz* tmp = new BlockToeplitz(Num_Rows, Num_Cols, 1);
+            tmp->Diags[0] = 0;
+            tmp->Vals[0] = s->Clone(1.0);
+            Matrix* result = this->Add(*tmp);
+            // cleanup temporary
+            delete tmp;
+            return result;
+        }
+        throw std::invalid_argument("BlockToeplitz::Add expects BlockToeplitz or SparseToeplitz");
+    }
+
+    if (Num_Rows != o->Num_Rows || Num_Cols != o->Num_Cols)
+        throw std::invalid_argument("BlockToeplitz::Add dimension mismatch");
+
+    // Build union of diagonals (both Diags arrays are assumed sorted)
+    std::vector<int> diagUnion;
+    int ia = 0, ib = 0;
+    while (ia < Num_Diags || ib < o->Num_Diags) {
+        if (ia < Num_Diags && (ib == o->Num_Diags || Diags[ia] < o->Diags[ib])) {
+            diagUnion.push_back(Diags[ia++]);
+        } else if (ib < o->Num_Diags && (ia == Num_Diags || o->Diags[ib] < Diags[ia])) {
+            diagUnion.push_back(o->Diags[ib++]);
+        } else {
+            diagUnion.push_back(Diags[ia]); ++ia; ++ib;
+        }
+    }
+
+    int n = (int)diagUnion.size();
+    BlockToeplitz* R = new BlockToeplitz(Num_Rows, Num_Cols, n);
+    for (int k = 0; k < n; ++k) {
+        R->Diags[k] = diagUnion[k];
+
+        // find indices in this and other
+        int idxA = -1, idxB = -1;
+        for (int i = 0; i < Num_Diags; ++i) if (Diags[i] == diagUnion[k]) { idxA = i; break; }
+        for (int i = 0; i < o->Num_Diags; ++i) if (o->Diags[i] == diagUnion[k]) { idxB = i; break; }
+
+        if (idxA >= 0 && idxB >= 0) {
+            // both present: add sub-blocks
+            Matrix* a = Vals[idxA];
+            Matrix* b = o->Vals[idxB];
+            BlockToeplitz* ablock = dynamic_cast<BlockToeplitz*>(a);
+            BlockToeplitz* bblock = dynamic_cast<BlockToeplitz*>(b);
+            if (ablock && bblock) {
+                R->Vals[k] = ablock->Add(*bblock);
+                continue;
+            }
+            SparseToeplitz* asparse = dynamic_cast<SparseToeplitz*>(a);
+            SparseToeplitz* bsparse = dynamic_cast<SparseToeplitz*>(b);
+            if (asparse && bsparse) {
+                R->Vals[k] = asparse->Add(*bsparse);
+                continue;
+            }
+            throw std::logic_error("Unsupported sub-block types in BlockToeplitz::Add");
+        }
+
+        // only one present: clone the present sub-block
+        if (idxA >= 0) {
+            R->Vals[k] = Vals[idxA]->Clone(1.0);
+        } else if (idxB >= 0) {
+            R->Vals[k] = o->Vals[idxB]->Clone(1.0);
+        }
+    }
+
+    return R;
 }
