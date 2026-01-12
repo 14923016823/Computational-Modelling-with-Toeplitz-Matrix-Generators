@@ -215,8 +215,3 @@ Matrix* COO::printFullMatrix()
     }
     return nullptr;
 }
-
-Matrix* COO::Add(Matrix& other)
-{
-    return nullptr;
-}

@@ -12,6 +12,9 @@ public:
 
     double* Diag_Vals;
     DiagonalMatrix(int size);
+
+    DiagonalMatrix(int nrows, int ncols);
+
     ~DiagonalMatrix(); 
       
     //copy and scale constructor
@@ -34,7 +37,5 @@ public:
     Matrix* printFullMatrix() override;
     
     double operator()(int i, int j) const override;
-
-    Matrix* Add(Matrix& other) override;
 };
 

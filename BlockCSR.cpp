@@ -230,8 +230,3 @@ Matrix* BlockCSR::printFullMatrix()
     
     return nullptr;
 }
-
-Matrix* BlockCSR::Add(Matrix& other)
-{
-    return nullptr;
-}

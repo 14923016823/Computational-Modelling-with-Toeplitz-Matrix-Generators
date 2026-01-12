@@ -4,6 +4,7 @@
 #include "VectorD.h"
 #include "SparseToeplitz.h"
 #include "BlockCSR.h"
+#include "COO.h"
 
 
 class CSR: public Matrix
@@ -44,6 +45,4 @@ public:
     Matrix* printFullMatrix() override;
     
     double operator()(int i, int j) const override;
-
-    Matrix* Add(Matrix& other) override;
 };

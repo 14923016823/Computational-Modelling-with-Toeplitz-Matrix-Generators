@@ -1,10 +1,3 @@
-#include <vector>
-#include <stdexcept>
-#include <iostream>
-//#include <tuple>
-//#include "Vector.h"
-
-
 #include "DiagonalMatrix.h"
 
 
@@ -12,6 +5,13 @@ DiagonalMatrix::DiagonalMatrix(int size)
 {
     Num_Rows=size;
     Num_Cols=size;
+    Diag_Vals=new double[Num_Cols];
+}
+
+DiagonalMatrix::DiagonalMatrix(int nrows, int ncols)
+{
+    Num_Rows=nrows;
+    Num_Cols=ncols;
     Diag_Vals=new double[Num_Cols];
 }
 
@@ -29,7 +29,7 @@ DiagonalMatrix::DiagonalMatrix(DiagonalMatrix& other, double c)
 
 DiagonalMatrix::~DiagonalMatrix()
 {
-    delete Diag_Vals;
+    delete[] Diag_Vals;
 }
 
 // scalar multiplication
@@ -57,6 +57,8 @@ Vectord DiagonalMatrix::operator*(Vectord& vec)
 
 double DiagonalMatrix::operator()(int i, int j) const 
 { 
+    if(i==j)
+        return Diag_Vals[j];
     return 0.0; 
 }
 
@@ -85,17 +87,9 @@ Matrix* DiagonalMatrix::printFullMatrix()
     {
         for(int j = 0; j<Num_Cols; j++)
         {
-            if(i==j)
-            {
-                std::cout << std::setw(4) << Diag_Vals[j];
-            }
+            std::cout << std::setw(4) << this->operator()(i,j);
         }
         std::cout << "\n";
     }
-    return nullptr;
-}
-
-Matrix* DiagonalMatrix::Add(Matrix& other)
-{
     return nullptr;
 }

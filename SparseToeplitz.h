@@ -2,6 +2,7 @@
 
 #include "VectorD.h"
 #include "Matrix.h"
+#include "BlockToeplitz.h"
 
 class SparseToeplitz: public Matrix
 {
@@ -30,6 +31,4 @@ public:
     Matrix* printFullMatrix() override;
     
     double operator()(int i, int j) const override;
-
-    Matrix* Add(Matrix& other) override;
 };

@@ -40,6 +40,4 @@ public:
     Matrix* printFullMatrix() override;
     
     double operator()(int i, int j) const override;
-
-    Matrix* Add(Matrix& other) override;
 };

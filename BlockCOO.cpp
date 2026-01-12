@@ -227,8 +227,3 @@ Matrix* BlockCOO::printFullMatrix()
     
     return nullptr;
 }
-
-Matrix* BlockCOO::Add(Matrix& other)
-{
-    return nullptr;
-}

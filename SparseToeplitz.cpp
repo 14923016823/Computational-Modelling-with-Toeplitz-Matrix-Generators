@@ -1,6 +1,4 @@
 #include "SparseToeplitz.h"
-#include "BlockToeplitz.h"
-#include "VectorD.h"
     
 SparseToeplitz::SparseToeplitz(int num_rows, int num_cols, int length)
 {
@@ -164,48 +162,4 @@ Matrix* SparseToeplitz::printFullMatrix()
         std::cout << "\n";
     }
     return nullptr;
-}
-
-Matrix* SparseToeplitz::Add(Matrix& other)
-{
-    SparseToeplitz* o = dynamic_cast<SparseToeplitz*>(&other);
-    if (!o)
-        throw std::invalid_argument("SparseToeplitz::Add expects SparseToeplitz");
-
-    // Build union of diagonals (both arrays assumed sorted ascending)
-    std::vector<int> diagUnion;
-    int ia = 0, ib = 0;
-    while (ia < Num_Diags || ib < o->Num_Diags) {
-        if (ia < Num_Diags && (ib == o->Num_Diags || Diags[ia] < o->Diags[ib])) {
-            diagUnion.push_back(Diags[ia++]);
-        } else if (ib < o->Num_Diags && (ia == Num_Diags || o->Diags[ib] < Diags[ia])) {
-            diagUnion.push_back(o->Diags[ib++]);
-        } else { // equal
-            diagUnion.push_back(Diags[ia]); ++ia; ++ib;
-        }
-    }
-
-    int n = (int)diagUnion.size();
-    SparseToeplitz* R = new SparseToeplitz(Num_Rows, Num_Cols, n);
-    for (int i = 0; i < n; ++i) {
-        R->Diags[i] = diagUnion[i];
-        R->Vals[i] = 0.0;
-    }
-
-    // add values from this
-    for (int i = 0; i < Num_Diags; ++i) {
-        int d = Diags[i];
-        auto it = std::lower_bound(diagUnion.begin(), diagUnion.end(), d);
-        int idx = (int)std::distance(diagUnion.begin(), it);
-        R->Vals[idx] += Vals[i];
-    }
-    // add values from other
-    for (int i = 0; i < o->Num_Diags; ++i) {
-        int d = o->Diags[i];
-        auto it = std::lower_bound(diagUnion.begin(), diagUnion.end(), d);
-        int idx = (int)std::distance(diagUnion.begin(), it);
-        R->Vals[idx] += o->Vals[i];
-    }
-
-    return R;
 }

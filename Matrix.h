@@ -29,8 +29,6 @@ public:
     virtual Matrix* printFullMatrix() = 0;
 
     virtual double operator()(int i, int j) const { return 0.0; }
-
-    virtual Matrix* Add(Matrix& other) = 0;
 };
 
 typedef  Matrix* MatrixPointer;

@@ -278,13 +278,3 @@ Matrix* CSR::printFullMatrix()
     }
     return nullptr;
 }
-
-Matrix* CSR::Add(Matrix& other)
-{
-    CSR* o = dynamic_cast<CSR*>(&other);
-    if (!o) 
-    {
-        
-    }
-    return nullptr;
-}
