@@ -72,3 +72,35 @@ Matrix* DiagonalMatrix::negativeTranspose()
     DiagonalMatrix* negTrans = new DiagonalMatrix(*this, -1.0);
     return negTrans;
 }
+
+double DiagonalMatrix::operator()(int i, int j) const
+{
+    if (i < 0 || i >= Num_Rows || j < 0 || j >= Num_Cols) {
+        throw std::out_of_range("Index out of bounds");
+    }
+    if (i == j) {
+        return Diag_Vals[i];
+    } else {
+        return 0.0;
+    }
+}
+ 
+Matrix* DiagonalMatrix::printFullMatrix()
+{
+    //print function for full dense expansion
+    std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
+
+    for (int i = 0; i < Num_Rows; i++) {
+        M[i][i] = Diag_Vals[i];
+    }
+
+    // Print the matrix
+    for (const auto& row : M) {
+        for (const auto& val : row) {
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    return nullptr; // or return a new Matrix* if needed
+}

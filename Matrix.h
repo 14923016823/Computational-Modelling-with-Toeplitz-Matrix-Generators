@@ -32,11 +32,6 @@ public:
 
     virtual Matrix* printFullMatrix() = 0;
 
-    // Add another matrix (polymorphic). Implementations should support adding
-    // matrices of the same concrete type (e.g., SparseToeplitz + SparseToeplitz,
-    // BlockToeplitz + BlockToeplitz). Returns a newly allocated Matrix*.
-    virtual Matrix* Add(Matrix& other) = 0;
-
     virtual double operator()(int i, int j) const { return 0.0; }
 };
 

@@ -37,8 +37,6 @@ public:
 
     Matrix* printFullMatrix() override;
 
-    Matrix* Add(Matrix& other) override;
-
     double operator()(int i, int j) const override;
    
 };

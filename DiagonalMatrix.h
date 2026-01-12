@@ -31,5 +31,9 @@ public:
 
     Matrix* negativeTranspose();
 
+    double operator()(int i, int j) const override;
+
+    Matrix* printFullMatrix() override;
+
 };
 
