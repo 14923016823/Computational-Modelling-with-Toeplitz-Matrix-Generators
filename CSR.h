@@ -18,6 +18,8 @@ public:
     
     CSR(double* vals, int* cols, int* rows, int num_vals, int num_rows, int num_cols);
 
+    CSR(int num_rows, int num_cols, int num_vals);
+
     CSR(CSR& other, double c);
 
     //virtual Vectord operator*(Vectord& vect) override;
@@ -36,4 +38,12 @@ public:
     Matrix* Kronecker(Matrix& B) override;
 
     Matrix* Clone(double c) override;
+
+    Matrix* negativeTranspose() override;
+    
+    Matrix* printFullMatrix() override;
+    
+    double operator()(int i, int j) const override;
+
+    Matrix* Add(Matrix& other) override;
 };

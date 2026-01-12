@@ -133,4 +133,105 @@ Matrix* BlockCSR::Clone(double c)
     return copy;
 }
 
+double BlockCSR::operator()(int i, int j) const 
+{ 
+    if (i < 0 || i >= Num_Rows || j < 0 || j >= Num_Cols)
+        throw std::invalid_argument("Index outside of matrix boundaries");
 
+    int block_rows = Vals[0]->rows();
+    int block_cols = Vals[0]->cols();
+    
+    int block_row = i / block_rows;
+    int block_col = j / block_cols;
+    int sub_i = i % block_rows;
+    int sub_j = j % block_cols;
+
+    for (int k = Rows[block_row]; k < Rows[block_row+1]; k++) //Go through the row which the value is in
+    {
+        if (Cols[k] == block_col)
+        { 
+            // Access the sub-matrix element
+            return Vals[k]->operator()(sub_i, sub_j);
+        }
+    }
+    return 0.0;
+}
+
+Matrix* BlockCSR::negativeTranspose()
+{
+    BlockCSR* negTrans = new BlockCSR(Num_Cols, Num_Rows, Num_Vals);
+    negTrans->Rows[0] = 0;
+    int n;
+    #pragma omp parallel for private(n)
+    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    {
+        n=0;
+        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        {
+            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values
+            {
+                if (Cols[i]==c) //Only add a value if the current entry of Cols is the same as the current column
+                {
+                    n++;
+                }
+            }
+        }
+        negTrans->Rows[c+1] = n; //Set number of transposed row entries
+    }
+
+    for(int c = 0;c<Num_Cols;c++)
+    {
+        negTrans->Rows[c+1] += negTrans->Rows[c];
+    }
+    //All of the above is just making the Rows array, below is actually inserting values with correct column indices
+    int m;
+    #pragma omp parallel for private(m)
+    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    {
+        m=0;
+        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        {
+            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
+            {
+                if(Cols[i]==c && m<negTrans->Rows[c+1])
+                {
+                    negTrans->Vals[negTrans->Rows[c]+m] = Vals[i]->negativeTranspose();
+                    negTrans->Cols[negTrans->Rows[c]+m] = r;
+                    m++;
+                }
+            }
+        }
+    }
+    return negTrans;
+}
+
+Matrix* BlockCSR::printFullMatrix()
+{
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+    int br = Vals[0]->rows();
+    int bc = Vals[0]->cols();
+
+    for (int k = 0; k < Num_Vals; k++) 
+    {
+        if (Vals[k]->rows() != br || Vals[k]->cols() != bc) 
+        {
+            throw std::logic_error("Inconsistent block sizes in BlockCSR");
+        }
+    }
+
+    for (int i = 0; i < Num_Rows; i++) 
+    {
+        for (int j = 0; j < Num_Cols; j++) 
+        {
+            std::cout << std::setw(4) << this->operator()(i,j);
+        }
+        std::cout << "\n";
+    }
+    
+    return nullptr;
+}
+
+Matrix* BlockCSR::Add(Matrix& other)
+{
+    return nullptr;
+}

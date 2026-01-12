@@ -1,12 +1,20 @@
 #include "CSR.h"
 
-int T = 7;
-
 CSR::CSR(double* vals, int* cols, int* rows, int num_vals, int num_rows, int num_cols)
 {
     Vals = vals;
     Cols = cols;
     Rows = rows;
+    Num_Vals = num_vals;
+    Num_Cols = num_cols;
+    Num_Rows = num_rows;
+}
+
+CSR::CSR(int num_rows, int num_cols, int num_vals)
+{
+    Vals = new double[num_vals];
+    Cols = new int[num_cols];
+    Rows = new int[num_rows];
     Num_Vals = num_vals;
     Num_Cols = num_cols;
     Num_Rows = num_rows;
@@ -165,19 +173,118 @@ Matrix* CSR::Kronecker(Matrix& B)
    
     BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     int i;
-    //#pragma omp parallel for private(i)
+    result->Rows[i]=0;
+    #pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
-        result->Cols[i]=Cols[i];
-        result->Rows[i]=Rows[i];
-        result->Vals[i] = B.Clone(Vals[i]);   
+        result->Cols[i] = Cols[i];
+        result->Rows[i+1] = Rows[i+1];
+        result->Vals[i] = B.Clone(Vals[i]);
     }
-    
-    printf("vals[i],%f\n",result->Vals);
     return result;
+}
+
+double CSR::operator()(int i, int j) const
+{
+    if (i < 0 || i >= Num_Rows || j < 0 || j >= Num_Cols)
+        throw std::invalid_argument("Index outside of matrix boundaries");
+    for(int k = Rows[i]; k < Rows[i+1]; k++) 
+    {
+        if (Cols[k] == j)
+            return Vals[k];  
+    }
+    return 0.0;
 }
 
 Matrix* CSR::Clone(double c)
 {
    return new CSR(*this, c);
+}
+
+Matrix* CSR::negativeTranspose()
+{ 
+    CSR* negTrans = new CSR(Num_Cols, Num_Rows, Num_Vals);
+    negTrans->Rows[0] = 0;
+    int n;
+    #pragma omp parallel for private(n)
+    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    {
+        n=0;
+        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        {
+            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values
+            {
+                if (Cols[i]==c) //Only add a value if the current entry of Cols is the same as the current column
+                {
+                    n++;
+                }
+            }
+        }
+        negTrans->Rows[c+1] = n; //Set number of transposed row entries
+    }
+
+    for(int c = 0;c<Num_Cols;c++)
+    {
+        negTrans->Rows[c+1] += negTrans->Rows[c];
+    }
+    //All of the above is just making the Rows array, below is actually inserting values with correct column indices
+    int m;
+    #pragma omp parallel for private(m)
+    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    {
+        m=0;
+        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        {
+            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
+            {
+                if(Cols[i]==c && m<negTrans->Rows[c+1])
+                {
+                    negTrans->Vals[negTrans->Rows[c]+m] = -Vals[i];
+                    negTrans->Cols[negTrans->Rows[c]+m] = r;
+                    m++;
+                }
+            }
+        }
+    }
+    /*
+    int m = 0;
+    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    {
+        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        {
+            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
+            {
+                if(Cols[i]==c) //Placing this in the i-loop above and replacing m by n does not work
+                {
+                    negTrans->Vals[m] = -Vals[i];
+                    negTrans->Cols[m] = r;
+                    m++;
+                }
+            }
+        }
+    } //Sequential version*/
+    return negTrans;
+}
+
+Matrix* CSR::printFullMatrix()
+{
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+    for (int i = 0; i < Num_Rows; ++i) {
+        for (int j = 0; j < Num_Cols; ++j)
+        {
+            std::cout << std::setw(4) << this->operator()(i,j);
+        }
+        std::cout << "\n";
+    }
+    return nullptr;
+}
+
+Matrix* CSR::Add(Matrix& other)
+{
+    CSR* o = dynamic_cast<CSR*>(&other);
+    if (!o) 
+    {
+        
+    }
+    return nullptr;
 }

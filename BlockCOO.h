@@ -6,7 +6,7 @@
 #include "VectorD.h"
 #include "BlockToeplitz.h"
 
-typedef std::tuple<MatrixPointer,int,int> mtuple;
+typedef std::tuple<int,int,MatrixPointer> mtuple;
 
 class BlockCOO: public Matrix
 {
@@ -33,5 +33,12 @@ public:
     //Returns a cloned and scaled version of 
     Matrix* Clone(double c) override;
    
+    Matrix* negativeTranspose() override;
+    
+    Matrix* printFullMatrix() override;
+    
+    double operator()(int i, int j) const override;
+
+    Matrix* Add(Matrix& other) override;
 };
 

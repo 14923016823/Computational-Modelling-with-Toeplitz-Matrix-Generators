@@ -2,7 +2,7 @@
 
 #include <tuple>
 
-typedef std::tuple<double,int,int> tuple;
+typedef std::tuple<int,int,double> tuple;
 
 #include "Matrix.h"
 #include "VectorD.h"
@@ -15,9 +15,9 @@ public:
     tuple* Array;
     int Num_Vals;
 
-    COO(int length, int num_rows, int num_cols);
+    COO(int num_rows, int num_cols, int num_vals);
 
-    COO(const std::initializer_list<tuple>& list, int num_rows, int num_cols);
+    COO(int num_rows, int num_cols, const std::initializer_list<tuple>& list);
 
     COO(COO& other, double c);
 
@@ -34,4 +34,12 @@ public:
     Matrix* Kronecker(Matrix& B) override;
 
     Matrix* Clone(double c) override;
+
+    Matrix* negativeTranspose() override;
+    
+    Matrix* printFullMatrix() override;
+    
+    double operator()(int i, int j) const override;
+
+    Matrix* Add(Matrix& other) override;
 };

@@ -5,18 +5,24 @@ int main()
     const int length = 3;
     double vals[length] = {1,4,6};
     int num_cols = 4;
-    const int num_rows = 5;
+    int num_rows = 5;
     int cols[length] = {0,3,2};
     int rows[num_rows+1] = {0,2,2,2,2,3};
 
-    tuple t1 = std::make_tuple(1,0,0);
-    tuple t2 = std::make_tuple(4,0,3);
-    tuple t3 = std::make_tuple(6,4,2);
-    COO B({t1,t2,t3},num_rows,num_cols);
-    B.print();
+    tuple t1 = std::make_tuple(0,0,1);
+    tuple t2 = std::make_tuple(0,3,4);
+    tuple t3 = std::make_tuple(4,2,6);
+    COO B(num_rows,num_cols,{t1,t2,t3});
+    //B.print();
 
     CSR A(vals, cols, rows, length, num_rows, num_cols);
     Vectord x(num_cols);
+    A.print();
+
+    B.printFullMatrix();
+    Matrix* Bt = B.negativeTranspose();
+    Bt->print();
+    Bt->printFullMatrix();
     
     for(int i=0;i<num_cols;i++)
     {
@@ -40,6 +46,8 @@ int main()
     SparseToeplitz C(STheight, STwidth, STlength, STdiags, STvals);
     C.print();
 
+    C.printFullMatrix();
+
     Vectord a = C*x;
     a.print();
     
@@ -51,34 +59,59 @@ int main()
     CSR C_CSR(C);
     C_CSR.print();
 
+    COO C_COO(C);
+    C_COO.print();
+
+    COO One_COO(One);
+    One_COO.print();
+
     CSR One_CSR(One);
     One_CSR.print();
 
     Matrix* Two = C.Kronecker(One);
-    std::cout << (*Two).cols() << std::endl;
+
+    Matrix* Two_COO = One_COO.Kronecker(C_COO);
+    *Two_COO *= 2;
 
     Matrix* Two_CSR = One_CSR.Kronecker(C_CSR);
     *Two_CSR *= 2;
 
+    std::cout << "?" << "\n";
+
+    std::cout << "?" << "\n";
+
     Vectord in = Vectord({0,1,2,3});
+
+    std::cout << "?" << "\n";
 
     Vectord out = *Two*in;
 
-    Vectord out_CSR = *Two_CSR*in;
+    std::cout << "?" << "\n";
+
+    Vectord out_COO = *Two_COO*in;
+
+    std::cout << "?" << "\n";
 
     Matrix* Two_BT = One.Kronecker(C);
     *Two_BT *= 3;
 
+    std::cout << "?" << "\n";
+
     Vectord out_BT = *Two_BT*in;
 
+    Two_COO->printFullMatrix();
+    Two_BT->printFullMatrix();
+    Two_CSR->printFullMatrix();
+
+    Matrix* Three_CSR = Two_CSR->negativeTranspose();
+    Matrix* Three_COO = Two_COO->negativeTranspose();
+
+    Three_CSR->printFullMatrix();
+    Three_COO->printFullMatrix();
+    
     out.print();
-    out_CSR.print();
+    out_COO.print();
     out_BT.print();
-
-    COO C_COO(C);
-    C_COO.print();
-
-int i;
    
     return 0;
 }

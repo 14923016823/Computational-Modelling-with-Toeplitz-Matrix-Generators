@@ -18,8 +18,8 @@ BlockToeplitz::~BlockToeplitz()
     {
         delete Vals[i];
     }
-    delete Vals;
-    delete Diags;
+    delete[] Vals;
+    delete[] Diags;
 }
 
 // constructo
@@ -29,7 +29,7 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
 {
 
     Num_Rows=other.Num_Rows;
-    Num_Cols=other.Num_Rows;
+    Num_Cols=other.Num_Cols;
     Num_Diags=other.Num_Diags;
     Diags=new int[Num_Diags];
     Vals = new MatrixPointer[Num_Diags];
@@ -129,4 +129,162 @@ Matrix* BlockToeplitz::Clone(double c)
     return copy;
 }
 
+Matrix* BlockToeplitz::negativeTranspose()
+{
+    // Create a new BlockToeplitz that represents the negative transpose
+    BlockToeplitz* negTrans = new BlockToeplitz(Num_Cols, Num_Rows, Num_Diags);
+    // Reverse and negate diagonals, and negative-transpose each sub-block
+    for (int d = 0; d < Num_Diags; ++d) {
+        int src = Num_Diags - 1 - d;
+        negTrans->Diags[d] = -Diags[src];
+        // call negativeTranspose on the sub-block (returns Matrix*)
+        negTrans->Vals[d] = Vals[src]->negativeTranspose();
+    }
+    return negTrans;
+}
 
+double BlockToeplitz::operator()(int i, int j) const
+{
+    //determine which block we are in
+    int block_rows = Vals[0]->rows();
+    int block_cols = Vals[0]->cols();
+
+    int block_row = i / block_rows;
+    int block_col = j / block_cols;
+    int sub_i = i % block_rows;
+    int sub_j = j % block_cols;
+
+    //find which diagonal this is
+    int diag_index = block_col - block_row;
+    for (int k = 0; k < Num_Diags; k++) {
+        if (Diags[k] == diag_index) {
+            // Access the sub-matrix element
+            return (*Vals[k])(sub_i, sub_j);
+        }
+    }
+    return 0.0; // element is zero if not on any stored diagonal
+}
+
+Matrix* BlockToeplitz::printFullMatrix() {
+    std::vector<std::vector<double>> M(
+        Num_Rows, std::vector<double>(Num_Cols, 0.0));
+
+    int br = Vals[0]->rows();
+    int bc = Vals[0]->cols();
+
+    for (int k = 0; k < Num_Diags; k++) {
+        if (Vals[k]->rows() != br || Vals[k]->cols() != bc) {
+            throw std::logic_error("Inconsistent block sizes in BlockToeplitz");
+        }
+    }
+
+    int num_block_rows = Num_Rows / br;
+    int num_block_cols = Num_Cols / bc;
+
+    for (int block_row = 0; block_row < num_block_rows; block_row++) {
+        for (int block_col = 0; block_col < num_block_cols; block_col++) {
+
+            int diag = block_col - block_row;
+
+            for (int k = 0; k < Num_Diags; k++) {
+                if (Diags[k] == diag) {
+
+                    for (int i = 0; i < br; i++) {
+                        for (int j = 0; j < bc; j++) {
+
+                            int I = block_row * br + i;
+                            int J = block_col * bc + j;
+
+                            M[I][J] += (*Vals[k])(i, j);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+    for (int i = 0; i < Num_Rows; ++i) {
+        for (int j = 0; j < Num_Cols; ++j)
+            std::cout << std::setw(4) << M[i][j];
+        std::cout << "\n";
+    }
+
+    return nullptr;
+}
+
+Matrix* BlockToeplitz::Add(Matrix& other)
+{
+    // If other is a BlockToeplitz, handle directly.
+    BlockToeplitz* o = dynamic_cast<BlockToeplitz*>(&other);
+    if (!o) {
+        // If other is a SparseToeplitz, lift it to a BlockToeplitz (identity kronecker)
+        SparseToeplitz* s = dynamic_cast<SparseToeplitz*>(&other);
+        if (s) {
+            // create a temporary BlockToeplitz that represents identity kron with s
+            BlockToeplitz* tmp = new BlockToeplitz(Num_Rows, Num_Cols, 1);
+            tmp->Diags[0] = 0;
+            tmp->Vals[0] = s->Clone(1.0);
+            Matrix* result = this->Add(*tmp);
+            // cleanup temporary
+            delete tmp;
+            return result;
+        }
+        throw std::invalid_argument("BlockToeplitz::Add expects BlockToeplitz or SparseToeplitz");
+    }
+
+    if (Num_Rows != o->Num_Rows || Num_Cols != o->Num_Cols)
+        throw std::invalid_argument("BlockToeplitz::Add dimension mismatch");
+
+    // Build union of diagonals (both Diags arrays are assumed sorted)
+    std::vector<int> diagUnion;
+    int ia = 0, ib = 0;
+    while (ia < Num_Diags || ib < o->Num_Diags) {
+        if (ia < Num_Diags && (ib == o->Num_Diags || Diags[ia] < o->Diags[ib])) {
+            diagUnion.push_back(Diags[ia++]);
+        } else if (ib < o->Num_Diags && (ia == Num_Diags || o->Diags[ib] < Diags[ia])) {
+            diagUnion.push_back(o->Diags[ib++]);
+        } else {
+            diagUnion.push_back(Diags[ia]); ++ia; ++ib;
+        }
+    }
+
+    int n = (int)diagUnion.size();
+    BlockToeplitz* R = new BlockToeplitz(Num_Rows, Num_Cols, n);
+    for (int k = 0; k < n; ++k) {
+        R->Diags[k] = diagUnion[k];
+
+        // find indices in this and other
+        int idxA = -1, idxB = -1;
+        for (int i = 0; i < Num_Diags; ++i) if (Diags[i] == diagUnion[k]) { idxA = i; break; }
+        for (int i = 0; i < o->Num_Diags; ++i) if (o->Diags[i] == diagUnion[k]) { idxB = i; break; }
+
+        if (idxA >= 0 && idxB >= 0) {
+            // both present: add sub-blocks
+            Matrix* a = Vals[idxA];
+            Matrix* b = o->Vals[idxB];
+            BlockToeplitz* ablock = dynamic_cast<BlockToeplitz*>(a);
+            BlockToeplitz* bblock = dynamic_cast<BlockToeplitz*>(b);
+            if (ablock && bblock) {
+                R->Vals[k] = ablock->Add(*bblock);
+                continue;
+            }
+            SparseToeplitz* asparse = dynamic_cast<SparseToeplitz*>(a);
+            SparseToeplitz* bsparse = dynamic_cast<SparseToeplitz*>(b);
+            if (asparse && bsparse) {
+                R->Vals[k] = asparse->Add(*bsparse);
+                continue;
+            }
+            throw std::logic_error("Unsupported sub-block types in BlockToeplitz::Add");
+        }
+
+        // only one present: clone the present sub-block
+        if (idxA >= 0) {
+            R->Vals[k] = Vals[idxA]->Clone(1.0);
+        } else if (idxB >= 0) {
+            R->Vals[k] = o->Vals[idxB]->Clone(1.0);
+        }
+    }
+
+    return R;
+}

@@ -24,4 +24,12 @@ public:
     Matrix* Kronecker(Matrix& B) override;
 
     Matrix* Clone(double c) override;
+
+    Matrix* negativeTranspose() override;
+    
+    Matrix* printFullMatrix() override;
+    
+    double operator()(int i, int j) const override;
+
+    Matrix* Add(Matrix& other) override;
 };

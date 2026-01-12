@@ -6,6 +6,8 @@
 #include <cmath>
 #include <iostream>
 #include <exception>
+#include <vector>
+#include <iomanip>
 
 class Vectord
 {
