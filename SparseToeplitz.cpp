@@ -120,7 +120,7 @@ Matrix* SparseToeplitz::negativeTranspose()
     return negTrans;
 }
 
-Matrix* SparseToeplitz::printFullMatrix()
+void SparseToeplitz::printFullMatrix()
 {
     std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
     for (int d = 0; d < Num_Diags; d++) {
@@ -142,5 +142,4 @@ Matrix* SparseToeplitz::printFullMatrix()
             std::cout << std::setw(4) << std::left << M[i][j];
         std::cout << "\n";
     }
-    return nullptr;
 }

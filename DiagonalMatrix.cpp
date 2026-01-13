@@ -85,7 +85,7 @@ double DiagonalMatrix::operator()(int i, int j) const
     }
 }
  
-Matrix* DiagonalMatrix::printFullMatrix()
+void DiagonalMatrix::printFullMatrix()
 {
     //print function for full dense expansion
     std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
@@ -97,10 +97,8 @@ Matrix* DiagonalMatrix::printFullMatrix()
     // Print the matrix
     for (const auto& row : M) {
         for (const auto& val : row) {
-            std::cout << val << " ";
+            std::cout << val << "   ";
         }
         std::cout << std::endl;
     }
-
-    return nullptr; // or return a new Matrix* if needed
 }

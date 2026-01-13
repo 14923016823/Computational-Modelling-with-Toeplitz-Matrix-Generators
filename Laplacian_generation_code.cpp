@@ -7,6 +7,7 @@
 #include "SparseToeplitz.h"
 #include "BlockToeplitz.h"
 #include "DiagonalMatrix.h"
+#include "Vectord.h"
 
 //======================================== TO DOs ========================================
 // - PRIORITY: Integration with new BlockToeplitz class structure -- Done
@@ -182,9 +183,9 @@ private:
 
 class Laplacian2D_ToeplitzMatrix {
     public:
-    Laplacian2D_ToeplitzMatrix(const int rows, const int cols) {
+    Laplacian2D_ToeplitzMatrix(const int rows, const int cols, Vectord& b1) {
         // Generate the Laplacian matrix with non-homogeneous spacing and variable k
-        generateMatrix(rows, cols);
+        generateMatrix(rows, cols, b1);
     }
     
     private:
@@ -197,7 +198,7 @@ class Laplacian2D_ToeplitzMatrix {
         return 1.0 + 0.5 * (x + y);
     }
 
-    void generateMatrix(const int rows, const int cols) {
+    Vectord generateMatrix(const int rows, const int cols, Vectord& b1) {
         // Implementation for generating the Laplacian matrix with non-homogeneous mesh spacing and variable k
 
 
@@ -251,31 +252,39 @@ class Laplacian2D_ToeplitzMatrix {
         IncidenceMatrix.Vals[1] = lowerIncidencePtr;
         
         //     b.) Compute negative transpose
+        Matrix* negTransPtr = IncidenceMatrix.negativeTranspose();
+        BlockToeplitz* negTransBlockPtr = static_cast<BlockToeplitz*>(negTransPtr); //cast to BlockToeplitz pointer for further operations
 
         //     c.) W_ee matrix generation function
         int dim = rows * cols;
         DiagonalMatrix W_ee_matrix(dim);
 
         for (int i = 0; i < dim; ++i) {
-            W_ee_matrix.Diag_Vals[i] = k_func(i % cols, i / cols);
+            W_ee_matrix.Diag_Vals[i] = k_func(i % cols, i / rows);
         }
 
-        W_ee_matrix.printFullMatrix();
+        //     d.) Matrix-vector multiplcation setup to obtain solution to Laplacian system
+        Vectord b2 = IncidenceMatrix * b1;
+        Vectord Wb = W_ee_matrix * b2;
+        Vectord final_b = (*negTransBlockPtr) * Wb;
 
-
-        
-
+        return final_b;
     }
 };
 
 
 //=============================== Main function ========================================
 int main() {
-    int rows = 4;
-    int cols = 4;
+    int rows = 3;
+    int cols = 3;
+
+    Vectord vec(rows * cols);
+    for (int i = 0; i < rows * cols; ++i) {
+        vec.Vec[i] = 1.0; // Example initialization
+    }
     
     //Laplacian2D_FullMatrix laplacian(rows, cols);
-    Laplacian2D_ToeplitzMatrix laplacian_toeplitz(rows, cols);
+    Laplacian2D_ToeplitzMatrix laplacian_toeplitz(rows, cols, vec);
 
     return 0;
 }

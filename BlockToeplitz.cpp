@@ -211,7 +211,7 @@ double BlockToeplitz::operator()(int i, int j) const
     return nullptr; // Adjust return type as needed
 }*/
 
-Matrix* BlockToeplitz::printFullMatrix() {
+void BlockToeplitz::printFullMatrix() {
     std::vector<std::vector<double>> M(
         Num_Rows, std::vector<double>(Num_Cols, 0.0));
 
@@ -255,6 +255,4 @@ Matrix* BlockToeplitz::printFullMatrix() {
             std::cout << std::setw(4) << M[i][j];
         std::cout << "\n";
     }
-
-    return nullptr;
 }

@@ -33,7 +33,7 @@ public:
 
     double operator()(int i, int j) const override;
 
-    Matrix* printFullMatrix() override;
+    void printFullMatrix() override;
 
 };
 
