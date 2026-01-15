@@ -14,7 +14,7 @@ public:
     int cols() const;
 
     Matrix();
-    //Matrix(int cols, int rows);
+    Matrix(int cols, int rows);
 
     virtual ~Matrix()=default;
 
@@ -22,7 +22,8 @@ public:
     virtual void operator*=(double scalar) = 0;
 
     // vector multiplication
-    virtual Vectord operator*(Vectord& vec) = 0;
+    virtual Vectord operator*(const Vectord& vec) const;
+    virtual void matvec(const Vectord& in, Vectord& out) const = 0;
 
     virtual Matrix* Clone(double c) = 0;
  

@@ -1,46 +1,71 @@
 #ifndef VECTORD_H
 #define VECTORD_H
 
+#include <Eigen/Dense>
+#include <iostream>
+#include <stdexcept>
 
-class Vectord {
+template<typename T = double>
+class Vector {
 public:
-    int Length;
-    double* Vec;
+    Vector() = default;
+    explicit Vector(int n) { data_.resize(n); data_.setZero(); update_ptr(); }
+    Vector(const T* data, int n) { data_ = Eigen::Map<const Eigen::Matrix<T, Eigen::Dynamic, 1>>(data, n); update_ptr(); }
+    Vector(const Vector& other) = default;
+    Vector(Vector&& other) noexcept = default;
+    Vector& operator=(const Vector& other) = default;
+    Vector& operator=(Vector&& other) noexcept = default;
+    ~Vector() = default;
 
-    Vectord();
-    explicit Vectord(int n);
-    Vectord(const double* data, int n);
+    int len() const { return static_cast<int>(data_.size()); }
 
-    Vectord(const Vectord& other);
-    Vectord(Vectord&& other) noexcept;
+    void PrintVector() const {
+        std::cout << data_.transpose() << std::endl;
+    }
 
-    Vectord& operator=(const Vectord& other);
-    Vectord& operator=(Vectord&& other) noexcept;
+    T& operator[](int i) { return data_(i); }
+    const T& operator[](int i) const { return data_(i); }
 
-    ~Vectord();
+    T* Vec = nullptr;
 
-    int len() const;
+    T* data() { return data_.data(); }
+    const T* data() const { return data_.data(); }
 
-    void PrintVector() const;
+    void resize(int n) { data_.resize(n); data_.setZero(); update_ptr(); }
+    void fill(T value) { data_.setConstant(value); update_ptr(); }
 
-    double& operator[](int i);
-    const double& operator[](int i) const;
+    T dot(const Vector& other) const {
+        if (len() != other.len()) throw std::runtime_error("dot: size mismatch");
+        return data_.dot(other.data_);
+    }
 
-    double* data();
-    const double* data() const;
+    T norm2() const { return data_.squaredNorm(); }
+    T norm() const { return data_.norm(); }
 
-    void resize(int n);
-    void fill(double value);
+    void scal(T a) {
+        data_ *= a;
+        update_ptr();
+    }
 
-    double dot(const Vectord& other) const;
+    void axpy(T a, const Vector& x) {
+        if (len() != x.len()) throw std::runtime_error("axpy: size mismatch");
+        data_ += a * x.data_;
+        update_ptr();
+    }
 
-    double norm2() const;
-    double norm() const;
+    void axpby(T a, T b, const Vector& x) {
+        if (len() != x.len()) throw std::runtime_error("axpby: size mismatch");
+        data_ = a * data_ + b * x.data_;
+        update_ptr();
+    }
 
-    void scal(double a);
-    void axpy(double a, const Vectord& x);
-    void axpby(double a, double b, const Vectord& x);
+private:
+    void update_ptr() { Vec = data_.data(); }
+    Eigen::Matrix<T, Eigen::Dynamic, 1> data_;
 };
+
+// Keep old name for backwards compatibility (global alias)
+using Vectord = Vector<double>;
 
 #endif
 
