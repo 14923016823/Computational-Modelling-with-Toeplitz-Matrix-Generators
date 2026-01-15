@@ -44,11 +44,11 @@ void Vectord::PrintVector()
 
 void Vectord::Sum(Vectord VecIn)
 {
-    if(VecIn.Length=!Length)\
+    if(VecIn.Length!=Length)\
     {
         throw std::invalid_argument("You can't sum vectors with different sizes");
     }
-    int i;
+    //int i;
     //#pragma omp for private(i)
     for(int i=0;i<Length;i++)
     {

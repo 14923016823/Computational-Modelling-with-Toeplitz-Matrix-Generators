@@ -7,9 +7,16 @@ BlockCSR::BlockCSR(int nrows, int ncols, int nvals)
     Num_Rows = nrows;
     Num_Cols = ncols;
     Num_Vals = nvals;
-    Rows = new int[Num_Rows];
-    Cols = new int[Num_Cols];
+    Rows = new int[Num_Rows+1];
+    Cols = new int[Num_Vals];
     Vals = new MatrixPointer[Num_Vals];
+    for(int i=0; i<Num_Vals; i++)
+    {
+        Vals[i] = nullptr;
+        Cols[i] = 0;
+    }
+    for(int i=0; i<Num_Rows+1; i++)
+        Rows[i] = 0;
     //Vals.resize(Num_Diags); 
 }
 
@@ -18,11 +25,11 @@ BlockCSR::~BlockCSR()
     printf("deleting blockCSR\n");
     for(int i=0;i<Num_Vals;i++)
     {
-        delete Vals[i];
+        delete[] Vals[i];
     }
-    delete Vals;
-    delete Rows;
-    delete Cols;
+    delete[] Vals;
+    delete[] Rows;
+    delete[] Cols;
 }
 
 // constructo
@@ -51,7 +58,6 @@ BlockCSR::BlockCSR(BlockCSR& other,double c)
 
 Vectord BlockCSR::operator*(Vectord& vec)
 {
-
     if (vec.len() != Num_Cols)
     {
         throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
@@ -111,8 +117,8 @@ Matrix* BlockCSR::Kronecker(Matrix& B)//if you add a new matrix at the bottom of
 {
 
     BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
-    printf("num diags=%d\n",Num_Vals);
-    printf("vals[0],%d\n",Vals[0]);
+    //printf("num diags=%d\n",Num_Vals);
+    //printf("vals[0],%d\n",Vals[0]);
     for(int i;i<Num_Vals;i++)
     {
         result->Cols[i]=Cols[i];
@@ -159,14 +165,16 @@ double BlockCSR::operator()(int i, int j) const
 
 Matrix* BlockCSR::negativeTranspose()
 {
+    int block_rows = Vals[0]->rows();
+    int block_cols = Vals[0]->cols();
+    
     BlockCSR* negTrans = new BlockCSR(Num_Cols, Num_Rows, Num_Vals);
-    negTrans->Rows[0] = 0;
     int n;
     #pragma omp parallel for private(n)
-    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    for(int c=0;c<Num_Cols/block_cols;c++) //Loop over columns of original matrix
     {
         n=0;
-        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        for(int r=0;r<Num_Rows/block_rows;r++) //Loop over rows of original matrix
         {
             for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values
             {
@@ -178,7 +186,6 @@ Matrix* BlockCSR::negativeTranspose()
         }
         negTrans->Rows[c+1] = n; //Set number of transposed row entries
     }
-
     for(int c = 0;c<Num_Cols;c++)
     {
         negTrans->Rows[c+1] += negTrans->Rows[c];
@@ -186,10 +193,10 @@ Matrix* BlockCSR::negativeTranspose()
     //All of the above is just making the Rows array, below is actually inserting values with correct column indices
     int m;
     #pragma omp parallel for private(m)
-    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
+    for(int c=0;c<Num_Cols/block_cols;c++) //Loop over columns of original matrix
     {
         m=0;
-        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
+        for(int r=0;r<Num_Rows/block_rows;r++) //Loop over rows of original matrix
         {
             for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
             {
@@ -202,10 +209,11 @@ Matrix* BlockCSR::negativeTranspose()
             }
         }
     }
+    std::cout << "uhuh\n";
     return negTrans;
 }
 
-Matrix* BlockCSR::printFullMatrix()
+void BlockCSR::printFullMatrix()
 {
     std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
     int br = Vals[0]->rows();
@@ -227,6 +235,4 @@ Matrix* BlockCSR::printFullMatrix()
         }
         std::cout << "\n";
     }
-    
-    return nullptr;
 }

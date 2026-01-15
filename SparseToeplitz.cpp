@@ -47,19 +47,23 @@ Vectord SparseToeplitz::operator*(Vectord& vec)
         throw std::invalid_argument("Vector and Matrix size dont match");
     }
     Vectord result = Vectord(Num_Rows);
-    int q;
-    int j;
     int i;
-    #pragma omp parallel for private(q,j,i)
-    for (i = 0;i < Num_Rows;i++) //This always completes the j-loop before moving on to the next i, so seems besically sequential
+    int j;
+    //double res_i = 0;
+//#pragma omp parallel for private(i,j)
+    for (i = 0;i < Num_Rows;i++)
     {
+        //printf("i = %d \n", i);
+        //#pragma omp parallel for private(j) reduction(+ : res_i)
         for (j = 0;j < Num_Diags;j++) 
         {
+            //printf("j = %d \n", j);
             if (Diags[j] + i >= 0 && Diags[j] + i < len)
             {
                 result.Vec[i] += vec.Vec[Diags[j] + i] * Vals[j];
             }
         }
+        //result.Vec[i] += res_i;
     }
     return result;
 }
@@ -139,27 +143,16 @@ Matrix* SparseToeplitz::negativeTranspose()
     return negTrans;
 }
 
-Matrix* SparseToeplitz::printFullMatrix()
+void SparseToeplitz::printFullMatrix()
 {
-    std::vector<std::vector<double>> M(Num_Rows, std::vector<double>(Num_Cols, 0.0));
-    for (int d = 0; d < Num_Diags; d++) {
-        for (int i = 0; i < Num_Rows; i++) {
-            int j = i + Diags[d];
-            if (j >= 0 && j < Num_Cols)
-                M[i][j] = Vals[d]; // stores diagonal value
-            
-            // if symmetric Toeplitz, uncomment this:
-            // if (Diags[d] > 0 && i - Diags[d] >= 0)
-            //    M[i][i - Diags[d]] = ValsD[d];
-        }
-    }
-
     std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
 
-    for (int i = 0; i < Num_Rows; ++i) {
-        for (int j = 0; j < Num_Cols; ++j)
-            std::cout << std::setw(4) << std::left << M[i][j];
+    for (int i = 0; i < Num_Rows; i++) 
+    {
+        for (int j = 0; j < Num_Cols; j++) 
+        {
+            std::cout << std::setw(4) << this->operator()(i,j);
+        }
         std::cout << "\n";
     }
-    return nullptr;
 }

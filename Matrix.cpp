@@ -20,3 +20,5 @@ void Matrix::operator*=(double scalar)
 { }
 
 void Matrix::print(){}
+
+void Matrix::printFullMatrix(){}

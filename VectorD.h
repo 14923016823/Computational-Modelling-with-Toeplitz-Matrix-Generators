@@ -8,6 +8,8 @@
 #include <exception>
 #include <vector>
 #include <iomanip>
+#include <chrono>
+#include <numeric>
 
 class Vectord
 {

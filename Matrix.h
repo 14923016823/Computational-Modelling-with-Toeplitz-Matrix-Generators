@@ -26,7 +26,7 @@ public:
 
     virtual Matrix* negativeTranspose() = 0;
 
-    virtual Matrix* printFullMatrix() = 0;
+    virtual void printFullMatrix();
 
     virtual double operator()(int i, int j) const { return 0.0; }
 };

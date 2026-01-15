@@ -9,6 +9,8 @@ BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
     Num_Diags = ndiags;
     Diags = new int[Num_Diags];
     Vals = new MatrixPointer[Num_Diags];
+    for(int i=0; i<Num_Diags; i++)
+        Vals[i] = nullptr;
 }
 
 BlockToeplitz::~BlockToeplitz()
@@ -43,7 +45,6 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
 
 Vectord BlockToeplitz::operator*(Vectord& vec)
 {
-
     if (vec.len() != Num_Cols)
     {
         throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
@@ -109,8 +110,8 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
 {
 
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
-    printf("num diags=%d\n",Num_Diags);
-    printf("vals[0],%d\n",Vals[0]);
+    //printf("num diags=%d\n",Num_Diags);
+    //printf("vals[0],%d\n",Vals[0]);
     int i;
 #pragma omp parallel for private(i)
     for(i=0;i<Num_Diags;i++)
@@ -165,10 +166,8 @@ double BlockToeplitz::operator()(int i, int j) const
     return 0.0; // element is zero if not on any stored diagonal
 }
 
-Matrix* BlockToeplitz::printFullMatrix() {
-    std::vector<std::vector<double>> M(
-        Num_Rows, std::vector<double>(Num_Cols, 0.0));
-
+void BlockToeplitz::printFullMatrix() {
+    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
     int br = Vals[0]->rows();
     int bc = Vals[0]->cols();
 
@@ -178,37 +177,12 @@ Matrix* BlockToeplitz::printFullMatrix() {
         }
     }
 
-    int num_block_rows = Num_Rows / br;
-    int num_block_cols = Num_Cols / bc;
-
-    for (int block_row = 0; block_row < num_block_rows; block_row++) {
-        for (int block_col = 0; block_col < num_block_cols; block_col++) {
-
-            int diag = block_col - block_row;
-
-            for (int k = 0; k < Num_Diags; k++) {
-                if (Diags[k] == diag) {
-
-                    for (int i = 0; i < br; i++) {
-                        for (int j = 0; j < bc; j++) {
-
-                            int I = block_row * br + i;
-                            int J = block_col * bc + j;
-
-                            M[I][J] += (*Vals[k])(i, j);
-                        }
-                    }
-                }
-            }
+    for (int i = 0; i < Num_Rows; i++) 
+    {
+        for (int j = 0; j < Num_Cols; j++) 
+        {
+            std::cout << std::setw(4) << this->operator()(i,j);
         }
-    }
-
-    std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
-    for (int i = 0; i < Num_Rows; ++i) {
-        for (int j = 0; j < Num_Cols; ++j)
-            std::cout << std::setw(4) << M[i][j];
         std::cout << "\n";
     }
-
-    return nullptr;
 }

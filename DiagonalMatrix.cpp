@@ -49,7 +49,7 @@ Vectord DiagonalMatrix::operator*(Vectord& vec)
 
     Vectord result=Vectord(vec.len());
 #pragma omp parallel for
-    for (size_t i = 0; i < Num_Cols; i++) {
+    for (int i = 0; i < Num_Cols; i++) {
         result.Vec[i] = Diag_Vals[i] * vec.Vec[i];
     }
     return result;
@@ -81,7 +81,7 @@ Matrix* DiagonalMatrix::negativeTranspose()
     return negTrans;
 }
 
-Matrix* DiagonalMatrix::printFullMatrix()
+void DiagonalMatrix::printFullMatrix()
 {
     for(int i = 0; i<Num_Rows; i++)
     {
@@ -91,5 +91,4 @@ Matrix* DiagonalMatrix::printFullMatrix()
         }
         std::cout << "\n";
     }
-    return nullptr;
 }

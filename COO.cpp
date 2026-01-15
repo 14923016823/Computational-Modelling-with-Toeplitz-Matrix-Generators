@@ -6,17 +6,23 @@ COO::COO(int num_rows, int num_cols, int num_vals)
     Array = new tuple[Num_Vals];
     Num_Rows = num_rows;
     Num_Cols = num_cols;
+    for(int q = 0;q<num_vals;q++)
+        Array[q] = std::make_tuple(0,0,0);
 }
 
 COO::COO(int num_rows, int num_cols, const std::initializer_list<tuple>& list)
 : COO(num_rows, num_cols, (int)list.size())
 {
     std::uninitialized_copy(list.begin(), list.end(), Array);
-
 }
 
 Vectord COO::operator*(Vectord& vect)
 {
+    int len = vect.Length;
+    if (len != Num_Cols) 
+    {
+        throw std::invalid_argument("Vector and Matrix size don't match");
+    }
     Vectord result(Num_Rows);
     double value;
     int row_ind;
@@ -29,6 +35,7 @@ Vectord COO::operator*(Vectord& vect)
         col_ind = std::get<1>(Array[i]);
         value = std::get<2>(Array[i]);
         result.Vec[row_ind] += value*vect.Vec[col_ind];
+        //printf("i = %d\n",i);
     }
     return result;
 }
@@ -162,48 +169,58 @@ Matrix* COO::negativeTranspose()
 { //This seems very inefficient, but I do not know how to get it working otherwise
     COO* negTrans = new COO(Num_Cols, Num_Rows, Num_Vals);
     int Rows[Num_Cols+1]; //Array to count entries per row in transposed matrix
-    
-    Rows[0] = 0;
+    for(int j=0;j<Num_Cols+1;j++)
+        Rows[j] = 0;
 #pragma omp parallel for
     for(int c=0;c<Num_Cols;c++) //Go through columns of original matrix
     {
-        Rows[c+1]=0;
         for(int i=0;i<Num_Vals;i++) //Go through values
         {
             if(c==std::get<1>(Array[i])) //Check whether current value is in current column
             {
                 Rows[c+1]++;
+                //std::cout << c << '\n';
             }
         }
     }
-    for(int c = 0;c<Num_Cols+1;c++)
+    for(int c = 0;c<Num_Cols;c++)
     {
         Rows[c+1] += Rows[c];
+        //std::cout << Rows[c+1] << '\n';
     }
 
     int n;
-#pragma omp parallel for private(n)
-    for(int c=0;c<Num_Cols;c++)
+    #pragma omp parallel for private(n)
+    for(int c=0;c<Num_Cols;c++) //Cols of original matrix, so rows of transposed matrix
     {
-        n=0;
-        for(int r=0;r<Num_Rows;r++)
-        {
-            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
+        n=Rows[c];
+        //printf("%d\n",c);
+        //for(int r=0;r<Num_Rows/block_rows;r++) //Rows of original matrix, so cols of transposed matrix
+        //{   
+            //printf("r = %d\n",r);
+            for(int i=0;i<Num_Vals;i++) //Loop over values in current row
             {
+                //printf("c=%d, i=%d\n",c, i);
+                //printf("%d\n",n);
                 if(c==std::get<1>(Array[i]) && n<Rows[c+1])
                 {
-                    std::get<0>(negTrans->Array[Rows[c]+n])=std::get<1>(Array[i]);
-                    std::get<1>(negTrans->Array[Rows[c]+n])=std::get<0>(Array[i]);
-                    std::get<2>(negTrans->Array[Rows[c]+n]) = -std::get<2>(Array[i]);
+                    //printf("yes, c=%d, i=%d, n=%d\n",c, i,n);
+                    //printf("Rows[%d+1] = %d, n = %d\n",c, Rows[c+1], n);
+                    //printf("block (%d, %d)\n", std::get<1>(Array[i]), std::get<0>(Array[i]));
+                    std::get<0>(negTrans->Array[n])=std::get<1>(Array[i]);
+                    std::get<1>(negTrans->Array[n])=std::get<0>(Array[i]);
+                    std::get<2>(negTrans->Array[n]) = -std::get<2>(Array[i]);
+                    //std::get<2>(Array[i])->printFullMatrix();
+                    //printf("finished c=%d, i=%d, n=%d\n",c, i,n);
                     n++;
                 }
             }
-        }
-    } 
+        //}
+    }
     return negTrans;
 }
 
-Matrix* COO::printFullMatrix()
+void COO::printFullMatrix()
 {
     std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
     for (int i = 0; i < Num_Rows; i++) {
@@ -213,5 +230,4 @@ Matrix* COO::printFullMatrix()
         }
         std::cout << "\n";
     }
-    return nullptr;
 }

@@ -8,13 +8,15 @@ BlockCOO::BlockCOO(int nrows, int ncols, int nvals)
     Num_Cols = ncols;
     Num_Vals = nvals;
     Array = new mtuple[Num_Vals];
+    for(int i=0; i<Num_Vals; i++)
+        Array[i] = std::make_tuple(0,0,nullptr);
     //Vals.resize(Num_Diags); 
 }
 
 BlockCOO::~BlockCOO()
 {
     printf("deleting blockCOO\n");
-    delete Array;
+    delete[] Array;
 }
 
 //copy and scale constructor
@@ -34,7 +36,6 @@ BlockCOO::BlockCOO(BlockCOO& other,double c)
 
 Vectord BlockCOO::operator*(Vectord& vec)
 {
-
     if (vec.len() != Num_Cols)
     {
         throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
@@ -130,7 +131,7 @@ double BlockCOO::operator()(int i, int j) const
     for (int k = 0; k < Num_Vals; k++) {
         if (std::get<0>(Array[k]) == block_row && std::get<1>(Array[k]) == block_col) {
             // Access the sub-matrix element
-            return (*std::get<2>(Array[k]))(sub_i, sub_j);
+            return std::get<2>(Array[k])->operator()(sub_i, sub_j);
         }
     }
     return 0.0; // element is zero if not on any stored coordinate 
@@ -158,55 +159,74 @@ Matrix* BlockCOO::negativeTranspose()
         }
     }
     return negTrans;*/
+    //int block_rows = std::get<2>(Array[0])->rows();
+    int block_cols = std::get<2>(Array[0])->cols();
 
     BlockCOO* negTrans = new BlockCOO(Num_Cols, Num_Rows, Num_Vals);
-    int Rows[Num_Cols+1]; //Array to count entries per row in transposed matrix
-    Rows[0] = 0;
-    for(int c=0;c<Num_Cols;c++) //Go through columns of original matrix
+    int Rows[Num_Cols/block_cols+1]; //Array to count entries per row in transposed matrix
+    for(int j=0;j<Num_Cols/block_cols+1;j++)
+        Rows[j] = 0;
+#pragma omp parallel for
+    for(int c=0;c<Num_Cols/block_cols;c++) //Go through columns of original matrix
     {
-        Rows[c+1]=0;
         for(int i=0;i<Num_Vals;i++) //Go through values
         {
             if(c==std::get<1>(Array[i])) //Check whether current value is in current column
             {
                 Rows[c+1]++;
+                //std::cout << c << '\n';
             }
         }
     }
-    for(int c = 0;c<Num_Cols+1;c++)
+    for(int c = 0;c<Num_Cols/block_cols;c++)
     {
         Rows[c+1] += Rows[c];
+        //std::cout << Rows[c+1] << '\n';
     }
 
     int n;
-#pragma omp parallel for private(n)
-    for(int c=0;c<Num_Cols;c++)
+    #pragma omp parallel for private(n)
+    for(int c=0;c<Num_Cols/block_cols;c++) //Cols of original matrix, so rows of transposed matrix
     {
-        n=0;
-        for(int r=0;r<Num_Rows;r++)
-        {
-            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
+        n=Rows[c];
+        //printf("%d\n",c);
+        //for(int r=0;r<Num_Rows/block_rows;r++) //Rows of original matrix, so cols of transposed matrix
+        //{   
+            //printf("r = %d\n",r);
+            for(int i=0;i<Num_Vals;i++) //Loop over values in current row
             {
+                //printf("c=%d, i=%d\n",c, i);
+                //printf("%d\n",n);
                 if(c==std::get<1>(Array[i]) && n<Rows[c+1])
                 {
-                    std::get<0>(negTrans->Array[Rows[c]+n])=std::get<1>(Array[i]);
-                    std::get<1>(negTrans->Array[Rows[c]+n])=std::get<0>(Array[i]);
-                    std::get<2>(negTrans->Array[Rows[c]+n]) = std::get<2>(Array[i])->negativeTranspose();
+                    //printf("yes, c=%d, i=%d, n=%d\n",c, i,n);
+                    //printf("Rows[%d+1] = %d, n = %d\n",c, Rows[c+1], n);
+                    //printf("block (%d, %d)\n", std::get<1>(Array[i]), std::get<0>(Array[i]));
+                    std::get<0>(negTrans->Array[n])=std::get<1>(Array[i]);
+                    std::get<1>(negTrans->Array[n])=std::get<0>(Array[i]);
+                    std::get<2>(negTrans->Array[n]) = std::get<2>(Array[i])->negativeTranspose();
+                    //std::get<2>(Array[i])->printFullMatrix();
+                    //printf("finished c=%d, i=%d, n=%d\n",c, i,n);
                     n++;
                 }
             }
-        }
+        //}
     }
     return negTrans;
 }
 
-Matrix* BlockCOO::printFullMatrix()
+void BlockCOO::printFullMatrix()
 {
     std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
+    //std::cout << std::get<0>(Array[0]) << '\n';
+    //std::cout << std::get<1>(Array[0]) << '\n';
     int br = std::get<2>(Array[0])->rows();
     int bc = std::get<2>(Array[0])->cols();
 
-    for (int k = 0; k < Num_Vals; k++) {
+    for (int k = 0; k < Num_Vals; k++) 
+    {
+        //std::cout << std::get<2>(Array[k])->rows() << ", " << std::get<2>(Array[k])->cols() << " != " << br << ", " << bc << '\n';
+        //std::get<2>(Array[k])->printFullMatrix();
         if (std::get<2>(Array[k])->rows() != br || std::get<2>(Array[k])->cols() != bc) 
         {
             throw std::logic_error("Inconsistent block sizes in BlockCOO");
@@ -217,13 +237,8 @@ Matrix* BlockCOO::printFullMatrix()
     {
         for (int j = 0; j < Num_Cols; j++) 
         {
-            for (int k = 0; k < Num_Vals; k++) 
-            {
-                std::cout << std::setw(4) << this->operator()(i,j);
-            }
+            std::cout << std::setw(4) << this->operator()(i,j);
         }
         std::cout << "\n";
     }
-    
-    return nullptr;
 }

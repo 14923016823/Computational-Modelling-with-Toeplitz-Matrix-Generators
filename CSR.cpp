@@ -13,11 +13,17 @@ CSR::CSR(double* vals, int* cols, int* rows, int num_vals, int num_rows, int num
 CSR::CSR(int num_rows, int num_cols, int num_vals)
 {
     Vals = new double[num_vals];
-    Cols = new int[num_cols];
-    Rows = new int[num_rows];
+    Cols = new int[num_vals];
+    Rows = new int[num_rows+1];
     Num_Vals = num_vals;
     Num_Cols = num_cols;
     Num_Rows = num_rows;
+    for(int q = 0;q<num_rows+1;q++)
+        Rows[q] = 0;
+    for(int q = 0;q<num_vals;q++)
+        Vals[q] = 0;
+    for(int q = 0;q<num_vals;q++)
+        Cols[q] = 0;
 }
 
 Vectord CSR::operator*(Vectord& vect)
@@ -25,33 +31,28 @@ Vectord CSR::operator*(Vectord& vect)
     int len = vect.Length;
     if (len != Num_Cols) 
     {
-        throw std::invalid_argument("Vector and Matrix size dont match");
+        throw std::invalid_argument("Vector and Matrix size don't match");
     }
     Vectord result(Num_Rows);
-    int c = 0;
-    int d=0;
-    int i=0;
-    int j=0;
-    #pragma omp parallel for private(i,d,j) //shared(c) num_threads(T)
-    for(i=0;i<Num_Rows;i++)
+    //int i=0;
+    //int j=0;
+    #pragma omp parallel for //num_threads(12)// private(i,j) 
+    for(int i=0;i<Num_Rows;i++)
     {
         //printf(" i = %d\n",i);
         //printf("%d\n",Rows[i+1]>Rows[i]);
-        if(Rows[i+1]>Rows[i])
+        int res_i = 0;
+        #pragma omp parallel for reduction(+ : res_i)
+        for(int j=Rows[i];j<Rows[i+1];j++)
         {
-            d = Rows[i+1]-Rows[i];
-            #pragma omp critical //reduction(+ : result.Vec[i])
-            for(j=0;j<d;j++)
-            {
-                c = Rows[i]+j;
-                //printf(" c = %d\n",c);
-                //printf("Cols[%d]=%d\n",c,Cols[c]);
-                //printf("vect[%d]=%f\n",Cols[c],vect.Vec[Cols[c]]);
-                result.Vec[i] += vect.Vec[Cols[c]]*Vals[c];
-                //printf("r[i]_j = %f\n",vect.Vec[Cols[c]]*Vals[c]);
-                //printf("r[i]_tot = %f\n",result.Vec[i]);
-            }
+            //printf(" j = %d\n",j);
+            //printf("Cols[%d]=%d\n",c,Cols[c]);
+            //printf("vect[%d]=%f\n",Cols[c],vect.Vec[Cols[c]]);
+            res_i = vect.Vec[Cols[j]]*Vals[j];
+            //printf("r[i]_j = %f\n",vect.Vec[Cols[c]]*Vals[c]);
+            //printf("r[i]_tot = %f\n",result.Vec[i]);
         }
+        result.Vec[i] += res_i;
     }
     return result;
 }
@@ -122,10 +123,11 @@ CSR::CSR(SparseToeplitz& ST)
     Num_Vals = 0;
     Num_Cols = ST.cols();
     Num_Rows = ST.rows();
+    int f;
     //Get the length of the Vals and Cols arrays
     for(int q = 0; q<ST.Num_Diags;q++)
     {
-        int f = ST.Diags[q];
+        f = ST.Diags[q];
         if(f==0)
         {
             Num_Vals += std::min(Num_Cols,Num_Rows);
@@ -173,7 +175,7 @@ Matrix* CSR::Kronecker(Matrix& B)
    
     BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     int i;
-    result->Rows[i]=0;
+    result->Rows[0]=0;
     #pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
@@ -266,7 +268,7 @@ Matrix* CSR::negativeTranspose()
     return negTrans;
 }
 
-Matrix* CSR::printFullMatrix()
+void CSR::printFullMatrix()
 {
     std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
     for (int i = 0; i < Num_Rows; ++i) {
@@ -276,5 +278,4 @@ Matrix* CSR::printFullMatrix()
         }
         std::cout << "\n";
     }
-    return nullptr;
 }
