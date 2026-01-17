@@ -10,9 +10,8 @@ struct DiagEntry {
 };
 
 template<typename T = double>
-class BlockToeplitz: public Matrix
+struct BlockToeplitz: public Matrix
 {
-public:
     int Num_Diags;
     std::vector<int> Diags;
     std::vector<MatrixPointer> Vals;       //sub-Toeplitz matrices (only if recursive)
@@ -41,6 +40,8 @@ public:
     void set_diag(int idx, int offset, Matrix* ptr);
 
     void matvec(const Vectord& in, Vectord& out) const override;
+
+    void regular_matvec(const Vectord& in, Vectord& out) const;
 
     void operator*=(double c) override;
 

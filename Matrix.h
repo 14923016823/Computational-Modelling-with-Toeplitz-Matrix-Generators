@@ -24,6 +24,11 @@ public:
     // vector multiplication
     virtual Vectord operator*(const Vectord& vec) const;
     virtual void matvec(const Vectord& in, Vectord& out) const = 0;
+    
+    // FFT-based matvec for structured matrices (optional optimization)
+    virtual void matvec_fft(const Vectord& in, Vectord& out) const {
+        matvec(in, out); // default fallback
+    }
 
     virtual Matrix* Clone(double c) = 0;
  

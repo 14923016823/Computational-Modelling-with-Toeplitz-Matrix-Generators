@@ -9,12 +9,14 @@
 #include <iomanip>
 
 // Header-only templated SparseToeplitz. Default scalar type is double.
+// Efficient storage: only stores non-zero diagonal values, not the entire matrix.
+// For a Laplacian matrix, stores only 3 values regardless of matrix size n.
 template<typename T = double>
 class SparseToeplitz: public Matrix
 {
 public:
-    std::vector<int> Diags;
-    std::vector<T> Vals;
+    std::vector<int> Diags;  // Diagonal offsets (e.g., 0, 1, n-1 for periodic Laplacian)
+    std::vector<T> Vals;     // Values for those diagonals (e.g., 2.0, -1.0, -1.0)
     int Num_Diags;
 
     SparseToeplitz(int nrows, int ncols, int ndiags)
@@ -74,8 +76,10 @@ public:
                 std::cout << "[";
                 for (int j = 0; j < Num_Cols; j++) {
                     double val = 0.0;
+                    int offset = j - i;
+                    // Check if this offset matches any diagonal
                     for (int d = 0; d < Num_Diags; d++) {
-                        if (Diags[d] == j - i) {
+                        if (Diags[d] == offset) {
                             val = static_cast<double>(Vals[d]);
                             break;
                         }
@@ -95,17 +99,16 @@ public:
         {
             throw std::invalid_argument("Vector and Matrix size dont match");
         }
-        for (int i = 0; i < Num_Rows; i++)
-        {
-            out[i] = 0.0;
-            for (int j = 0; j < Num_Diags; j++)
-            {
-                int current_col = Diags[j] + i;
-                if (current_col >= 0 && current_col < Num_Cols)
-                {
-                    out[i] += in[current_col] * static_cast<double>(Vals[j]);
+        
+        for (int i = 0; i < Num_Rows; ++i) {
+            double sum = 0.0;
+            for (int t = 0; t < Num_Diags; ++t) {
+                int j = i + Diags[t];
+                if (j >= 0 && j < Num_Cols) {
+                    sum += static_cast<double>(Vals[t]) * in[j];
                 }
             }
+            out[i] = sum;
         }
     }
 

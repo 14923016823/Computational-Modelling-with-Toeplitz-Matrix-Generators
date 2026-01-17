@@ -1,35 +1,50 @@
 #ifndef RUNGE_KUTTA4_H
 #define RUNGE_KUTTA4_H
 
-#include <tuple>
-#include <utility>
+#include "Vectord.h"
+#include "RHS.h"
 
-template<class RHS, class State>
-void rk4_step(RHS&& rhs,
-              State& u, double t, double dt,
-              State& k1, State& k2, State& k3, State& k4, State& tmp)
-{
-    const double h  = dt;
-    const double h2 = 0.5 * dt;
+class Runge_Kutta4 {
+private:
+    int N;
+    Vectord k1, k2, k3, k4, tmp;
 
-    rhs(u, k1, t);
+public:
+    Runge_Kutta4(int size) : N(size), k1(size), k2(size), k3(size), k4(size), tmp(size) {}
 
-    tmp = u;
-    tmp.axpy(h2, k1);
-    rhs(tmp, k2, t + h2);
+    void step(double t, double dt, Vectord& u, RHS& rhs) {
+        const double h = dt;
+        const double h2 = 0.5 * dt;
+        const double h6 = dt / 6.0;
+        const double h3 = dt / 3.0;
 
-    tmp = u;
-    tmp.axpy(h2, k2);
-    rhs(tmp, k3, t + h2);
+        // k1 = f(t, u)
+        rhs(t, u, k1);
 
-    tmp = u;
-    tmp.axpy(h, k3);       
-    rhs(tmp, k4, t + h);
+        // tmp = u + h2*k1
+        tmp = u;
+        tmp.axpy(h2, k1);
+        // k2 = f(t + h2, tmp)
+        rhs(t + h2, tmp, k2);
 
-    u.axpy(h / 6.0, k1);
-    u.axpy(h / 3.0, k2);
-    u.axpy(h / 3.0, k3);
-    u.axpy(h / 6.0, k4);
-}
+        // tmp = u + h2*k2
+        tmp = u;
+        tmp.axpy(h2, k2);
+        // k3 = f(t + h2, tmp)
+        rhs(t + h2, tmp, k3);
+
+        // tmp = u + h*k3
+        tmp = u;
+        tmp.axpy(h, k3);
+        // k4 = f(t + h, tmp)
+        rhs(t + h, tmp, k4);
+
+        // u = u + (h/6)*(k1 + 2*k2 + 2*k3 + k4)
+        u.axpy(h6, k1);
+        u.axpy(h3, k2);
+        u.axpy(h3, k3);
+        u.axpy(h6, k4);
+    }
+};
 
 #endif

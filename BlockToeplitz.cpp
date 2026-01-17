@@ -69,6 +69,51 @@ void BlockToeplitz<T>::matvec(const Vectord& in, Vectord& out) const
                 {
                     subinput[k] = in[col_start + k];
                 }
+                Vectord subsubres(Num_Rows_SubMatrixes);
+                Vals[j]->matvec_fft(subinput, subsubres);
+                subres.axpy(1.0, subsubres);
+            }
+        }
+        // copy accumulated block into out
+        int row_start = blockrow * Num_Rows_SubMatrixes;
+        for (int k = 0; k < Num_Rows_SubMatrixes; ++k)
+        {
+            out[row_start + k] = subres[k];
+        }
+    }
+}
+
+template<typename T>
+void BlockToeplitz<T>::regular_matvec(const Vectord& in, Vectord& out) const
+{
+
+    if (in.len() != Num_Cols || out.len() != Num_Rows)
+    {
+        throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
+    }
+
+    int Num_Rows_SubMatrixes = Vals[0]->rows();
+    int Num_Cols_SubMatrixes = Vals[0]->cols();
+
+    int Num_blockrows = Num_Rows / Num_Rows_SubMatrixes;
+    int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
+
+    for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
+    {
+        Vectord subres(Num_Rows_SubMatrixes); // initialized to zeros
+        // accumulate contributions from each diagonal/block
+        for (int j = 0; j < Num_Diags; j++)
+        {
+            int blockcol = Diags[j] + blockrow;
+            // ensure the whole sub-block fits in input vector
+            if (blockcol >= 0 && blockcol < Num_blockcols)
+            {
+                Vectord subinput(Num_Cols_SubMatrixes);
+                int col_start = blockcol * Num_Cols_SubMatrixes;
+                for (int k = 0; k < Num_Cols_SubMatrixes; ++k)
+                {
+                    subinput[k] = in[col_start + k];
+                }
                 Vectord subsubres = Vals[j]->operator*(subinput);
                 subres.axpy(1.0, subsubres);
             }
