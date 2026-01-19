@@ -1,4 +1,7 @@
 #pragma once
 
-#include "Random.h"
-#include "Laplacian.h"
+#include "COO.h"
+#include "CSR.h"
+#include "DiagonalMatrix.h"
+#include "BlockToeplitz.h"
+#include "DiagonalMatrix.h"
