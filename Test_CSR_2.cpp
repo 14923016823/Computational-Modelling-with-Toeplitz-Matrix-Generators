@@ -1,10 +1,22 @@
-#include "Test_CSR.h"
+#include "Test_CSR_2.h"
 
 int main()
 {
-    int STlength = 3;
-    int STdiags[STlength] = {-1,0,1};
-    double STvals[STlength] = {-1,2,-1};
+    int STlength = 10;
+    int STdiags[STlength];
+    for(int i=0;i<STlength;i++)
+    {
+        STdiags[i] = 2*i;
+    }
+
+    double STvals[STlength];
+    int n=0;
+    for(int i=-STlength/2;i<STlength/2;i++)
+    {
+        STvals[n] = (double)(2*i);
+        n++;
+    }
+
     int STwidth = 40000;
     int STheight = 40000;
     Vectord x(STwidth);

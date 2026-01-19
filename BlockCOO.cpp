@@ -97,7 +97,7 @@ Matrix* BlockCOO::Kronecker(Matrix& B)//if you add a new matrix at the bottom of
     BlockCOO* result = new BlockCOO(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     printf("num diags=%d\n",Num_Vals);
     printf("vals[0],%d\n",std::get<0>(Array[0]));
-    for(int i;i<Num_Vals;i++)
+    for(int i=0;i<Num_Vals;i++)
     {
         std::get<0>(result->Array[i])=std::get<0>(Array[i]);
         std::get<1>(result->Array[i])=std::get<1>(Array[i]);

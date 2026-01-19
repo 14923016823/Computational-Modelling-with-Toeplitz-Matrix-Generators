@@ -5,8 +5,8 @@ int main()
     int STlength = 3;
     int STdiags[STlength] = {-1,0,1};
     double STvals[STlength] = {-1,2,-1};
-    int STwidth = 400;
-    int STheight = 400;
+    int STwidth = 40000;
+    int STheight = 40000;
     Vectord x(STwidth);
     for(int i=0;i<STwidth;i++)
     {
