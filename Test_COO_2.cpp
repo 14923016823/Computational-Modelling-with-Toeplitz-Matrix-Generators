@@ -26,7 +26,7 @@ int main()
     }
     SparseToeplitz C(STheight, STwidth, STlength, STdiags, STvals);
 
-    CSR C_COO(C);
+    COO C_COO(C);
     for(int n=0;n<1000;n++)
     Vectord a = C_COO*x;
 
