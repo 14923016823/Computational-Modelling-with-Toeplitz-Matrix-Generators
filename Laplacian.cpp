@@ -7,16 +7,15 @@ Laplacian2D_ToeplitzMatrix::Laplacian2D_ToeplitzMatrix(const int rows, const int
     generateMatrix(rows, cols, b1);
 }
     
-double Laplacian2D_ToeplitzMatrix::w(double k, double a) {
-    return k / (a * a);
-}
+
 
 double Laplacian2D_ToeplitzMatrix::k_func(double x, double y) {
     // Example variable k function; modify as needed
     return 1.0 + 0.5 * (x + y);
 }
 
-Vectord Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, Vectord& b1) {
+void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, Vectord& b1) 
+{
     // Implementation for generating the Laplacian matrix with non-homogeneous mesh spacing and variable k
 
 
@@ -68,23 +67,40 @@ Vectord Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int col
     IncidenceMatrix.Diags[1] = 1; // diagonal for lower incidence matrix
     IncidenceMatrix.Vals[0] = rowBlockPtr;
     IncidenceMatrix.Vals[1] = lowerIncidencePtr;
+    //Incidence=&IncidenceMatrix;
     
     //     b.) Compute negative transpose
+    Incidence=new BlockToeplitz(IncidenceMatrix);
     Matrix* negTransPtr = IncidenceMatrix.negativeTranspose();
+    //BlockToeplitz negTrans=*negTrans;
+    Incidence_T=(*negTransPtr).Clone(1);
     BlockToeplitz* negTransBlockPtr = static_cast<BlockToeplitz*>(negTransPtr); //cast to BlockToeplitz pointer for further operations
 
     //     c.) W_ee matrix generation function
     int dim = 2 * rows * cols;
+
     DiagonalMatrix W_ee_matrix(dim);
 
-    for (int i = 0; i < dim; ++i) {
-        W_ee_matrix.Diag_Vals[i] = k_func(i % cols, i / rows);
-    }
+double dx = 1.0 / cols;
+double dy = 1.0 / rows;
 
-    //     d.) Matrix-vector multiplcation setup to obtain solution to Laplacian system
-    Vectord b2 = IncidenceMatrix * b1;
-    Vectord Wb = W_ee_matrix * b2;
-    Vectord final_b = (*negTransBlockPtr) * Wb;
+for (int i = 0; i < dim; ++i) 
+{
+    int col = i % cols;
+    int row = i / cols;  
+    double x = col * dx;
+    double y = row * dy;
+    double k_val = k_func(x, y);
+    W_ee_matrix.Diag_Vals[i] = k_val/(dx*dy);  // use dx (or dy) for spacing
+}
 
+    Diagonal=W_ee_matrix.Clone(1.0);
+}
+
+Vectord Laplacian2D_ToeplitzMatrix::Laplacian(Vectord& input)
+{
+    Vectord b2 = (*Incidence) * input;
+    Vectord Wb = (*Diagonal) * b2;
+    Vectord final_b = (*Incidence_T) * Wb;
     return final_b;
 }
