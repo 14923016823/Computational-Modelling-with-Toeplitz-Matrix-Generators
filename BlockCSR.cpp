@@ -119,7 +119,7 @@ Matrix* BlockCSR::Kronecker(Matrix& B)//if you add a new matrix at the bottom of
     BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     //printf("num diags=%d\n",Num_Vals);
     //printf("vals[0],%d\n",Vals[0]);
-    for(int i;i<Num_Vals;i++)
+    for(int i=0;i<Num_Vals;i++)
     {
         result->Cols[i]=Cols[i];
         result->Vals[i] = Vals[i]->Kronecker(B);
@@ -209,7 +209,6 @@ Matrix* BlockCSR::negativeTranspose()
             }
         }
     }
-    std::cout << "uhuh\n";
     return negTrans;
 }
 
