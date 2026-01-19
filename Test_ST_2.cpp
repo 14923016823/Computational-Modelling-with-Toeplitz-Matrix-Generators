@@ -13,7 +13,7 @@ int main()
     int n=0;
     for(int i=-STlength/2;i<STlength/2;i++)
     {
-        STvals[n] = 2*i;
+        STvals[n] = (double)(2*i);
         n++;
     }
 
@@ -25,7 +25,7 @@ int main()
         x.Vec[i]=i;
     }
     SparseToeplitz C(STheight, STwidth, STlength, STdiags, STvals);
-
+    for(int n=0;n<1000;n++)
     Vectord a = C*x;
 
     return 0;

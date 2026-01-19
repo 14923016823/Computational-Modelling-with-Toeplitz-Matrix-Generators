@@ -13,7 +13,7 @@ int main()
     int n=0;
     for(int i=-STlength/2;i<STlength/2;i++)
     {
-        STvals[n] = 2*i;
+        STvals[n] = (double)(2*i);
         n++;
     }
 
