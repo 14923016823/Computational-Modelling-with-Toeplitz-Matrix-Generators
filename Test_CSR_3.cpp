@@ -2,7 +2,7 @@
 
 int main()
 {
-    int STlength = 100;
+    int STlength = 1000;
     int STdiags[STlength];
     for(int i=0;i<STlength;i++)
     {
@@ -27,7 +27,7 @@ int main()
     SparseToeplitz C(STheight, STwidth, STlength, STdiags, STvals);
 
     CSR C_CSR(C);
-
+    for(int n=0;n<1000;n++)
     Vectord a = C_CSR*x;
 
     return 0;

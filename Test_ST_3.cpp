@@ -2,7 +2,7 @@
 
 int main()
 {
-    int STlength = 100;
+    int STlength = 1000;
     int STdiags[STlength];
     for(int i=0;i<STlength;i++)
     {
