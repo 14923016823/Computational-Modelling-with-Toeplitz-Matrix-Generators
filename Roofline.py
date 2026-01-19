@@ -58,7 +58,7 @@ def parse_advisor_xml(path):
 if len(sys.argv) > 1:
     path = sys.argv[1]
 else:
-    path = input("FULL path to the analysis directory (e000/hs000): ").strip().strip('"')
+    path = input("FULL path to the analysis directory (e000/hs[xxx]): ").strip().strip('"')
 
 CPUmodel, df_roofs, df_metrics = parse_advisor_xml(path)
 
@@ -94,11 +94,15 @@ app_gflops = df_metrics['TotalGFLOPS'].values[0]
 
 plt.scatter(app_ai, app_gflops, color='red', s=200, edgecolors='black', zorder=10)
 
+# Plot theoretical AI's
+plt.axvline(0.05, label='COO', color = 'red')
+plt.axvline(0.10, label='CSR', color = 'green')
+
 # 5. Formatting the Log-Log Plot
 plt.xscale('log')
 plt.yscale('log')
 plt.xlabel('Arithmetic Intensity (FLOPs/Byte)')
-plt.ylabel('Performance (GFLOPs/s)')
+plt.ylabel('Performance (GFLOPS)')
 plt.grid(True, which="both", ls="-", alpha=0.3)
 plt.legend()
 
