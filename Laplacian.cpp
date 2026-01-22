@@ -2,9 +2,9 @@
 //=========== Classes for Block Toeplitz matrix representation and operations ============
 #include "Laplacian.h"
 
-Laplacian2D_ToeplitzMatrix::Laplacian2D_ToeplitzMatrix(const int rows, const int cols, Vectord& b1) {
+Laplacian2D_ToeplitzMatrix::Laplacian2D_ToeplitzMatrix(const int rows, const int cols) {
     // Generate the Laplacian matrix with non-homogeneous spacing and variable k
-    generateMatrix(rows, cols, b1);
+    generateMatrix(rows, cols);
 }
     
 
@@ -14,7 +14,7 @@ double Laplacian2D_ToeplitzMatrix::k_func(double x, double y) {
     return 1.0 + 0.5 * (x + y);
 }
 
-void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, Vectord& b1) 
+void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols) 
 {
     // Implementation for generating the Laplacian matrix with non-homogeneous mesh spacing and variable k
 

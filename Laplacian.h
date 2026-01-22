@@ -4,9 +4,9 @@
 class Laplacian2D_ToeplitzMatrix {
     public:
 
-    Laplacian2D_ToeplitzMatrix(const int rows, const int cols, Vectord& b1);
+    Laplacian2D_ToeplitzMatrix(const int rows, const int cols);
 
-    void generateMatrix(const int rows, const int cols, Vectord& b1);
+    void generateMatrix(const int rows, const int cols);
 
     Vectord Laplacian(Vectord& input);
     
