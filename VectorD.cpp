@@ -56,11 +56,11 @@ void Vectord::Sum(Vectord VecIn)
     }   
 }
 
-double Vectord::dot(Vectord& VecIn)
+double Vectord::dot(const Vectord& VecIn) const
 {
     if(VecIn.Length!=Length)
     {
-        throw std::invalid_argument("You can't sum vectors with different sizes");
+        throw std::invalid_argument("You can't dot vectors with different sizes");
     }
     double s=0;
     for(int i=0;i<Length;i++)
@@ -77,4 +77,17 @@ Vectord& Vectord::scal(double c)
         Vec[i]*=c;
     }
     return (*this);
+}
+
+void Vectord::axpy(const double  c,const Vectord& VecIn)
+{
+    if(VecIn.Length!=Length)
+    {
+        throw std::invalid_argument("You can't sum vectors with different sizes");
+    }
+
+    for(int i=0;i<Length;i++)
+    {
+        Vec[i]+=c*VecIn.Vec[i];
+    }
 }

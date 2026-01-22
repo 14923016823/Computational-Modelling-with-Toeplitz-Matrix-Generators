@@ -28,7 +28,9 @@ public:
 
     void Sum(Vectord VecIn);
 
-    double dot(Vectord& VecIn);
+    double dot(const Vectord& VecIn) const;
 
     Vectord& scal(double c);
+
+    void axpy(const double c,const Vectord& VecIn);
 };
