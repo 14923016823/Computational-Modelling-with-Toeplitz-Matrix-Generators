@@ -49,7 +49,7 @@ Vectord BlockCOO::operator*(Vectord& vec)
     int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
 
     Vectord result(Num_Rows);
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
     {
         //int row = blockrow *;

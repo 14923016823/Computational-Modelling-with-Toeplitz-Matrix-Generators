@@ -117,7 +117,7 @@ COO::COO(COO& other,double c)
     Num_Vals=other.Num_Vals;
     Array = new tuple[Num_Vals];
     int i;
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(Array[i])=std::get<0>(other.Array[i]);
@@ -158,7 +158,7 @@ Matrix* COO::Kronecker(Matrix& B)
         std::get<0>(result->Array[i])=std::get<0>(Array[i]);
         std::get<1>(result->Array[i])=std::get<1>(Array[i]);
         std::get<2>(result->Array[i])=B.Clone(std::get<2>(Array[i]));
-        std::cout << std::get<2>(Array[i]) << "\n";
+        //std::cout << std::get<2>(Array[i]) << "\n";
     }
     
     //printf("vals[i],%f\n",std::get<0>(result->Array)); //This print statement does not work

@@ -15,7 +15,7 @@ BlockToeplitz::BlockToeplitz(int nrows, int ncols, int ndiags)
 
 BlockToeplitz::~BlockToeplitz()
 {
-    printf("deleting blockToeplitz\n");
+    //printf("deleting blockToeplitz\n");
     for(int i=0;i<Num_Diags;i++)
     {
         delete Vals[i];
@@ -59,7 +59,7 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
 
     Vectord result(Num_Rows);
     //int i;
-    #pragma omp parallel for //private(i)
+    //#pragma omp parallel for //private(i)
     for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
     {
         //int i = omp_get_thread_num();

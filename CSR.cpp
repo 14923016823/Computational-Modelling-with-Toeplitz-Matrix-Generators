@@ -36,7 +36,7 @@ Vectord CSR::operator*(Vectord& vect)
     Vectord result(Num_Rows);
     //int i=0;
     //int j=0;
-    #pragma omp parallel for //num_threads(12)// private(i,j) 
+    //#pragma omp parallel for //num_threads(12)// private(i,j) 
     for(int i=0;i<Num_Rows;i++)
     {
         //printf(" i = %d\n",i);
