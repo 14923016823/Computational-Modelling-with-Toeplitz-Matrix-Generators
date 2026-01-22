@@ -50,7 +50,7 @@ Vectord SparseToeplitz::operator*(Vectord& vec)
     int i;
     int j;
     //double res_i = 0;
-//#pragma omp parallel for private(i,j)
+#pragma omp parallel for private(i,j)
     for (i = 0;i < Num_Rows;i++)
     {
         //printf("i = %d \n", i);
