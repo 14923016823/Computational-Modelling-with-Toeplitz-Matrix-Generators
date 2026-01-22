@@ -118,7 +118,6 @@ int main()
     //end = std::chrono::steady_clock::now();
     //diff = end - start;
     //std::cout << "t = " << diff.count() << '\n';
-/*
 
     Matrix* Two = C.Kronecker(One);
     std::cout << "Two: \n";
@@ -188,9 +187,9 @@ int main()
     out_COO.print();
     out_BT.print();
    */
-    int rows = 3000;
-    int cols = 4000;
-    int arrays = 1000;
+    int rows = 300;
+    int cols = 400;
+    int arrays = 1;
 
     Vectord vec(cols*rows*arrays);
     for (int i = 0; i < rows * cols * arrays; ++i) {
@@ -198,7 +197,30 @@ int main()
     }
     
     //Laplacian2D_FullMatrix laplacian(rows, cols);
-    Vectord a = Laplacian3D_ToeplitzMatrix(rows, cols,arrays, vec).Laplacian3D(vec);
-
+    Laplacian2D_ToeplitzMatrix L2d=Laplacian2D_ToeplitzMatrix(rows,cols);
+    try
+    {
+        Vectord a = L2d*vec;
+        a=a;
+    }
+    catch(const char* msg)
+    {
+        std::cout << msg <<std::endl;
+    }
+    /*
+    std::cout << "L\n";
+    Laplacian3D_ToeplitzMatrix L3d=Laplacian3D_ToeplitzMatrix(rows,cols,arrays);
+    std::cout << "yess\n";
+    try
+    {
+        Vectord b = L3d*vec;
+        b=b;
+    }
+    catch(const char* msg)
+    {
+        std::cout << msg <<std::endl;
+    }
+    std::cout << "yes\n";
+*/
     return 0;
 }

@@ -38,7 +38,6 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
     Matrix* upperIncidenceMatrix = identityMatrixRows.Kronecker(rowBlockMatrix); // upper incidence matrix
     BlockToeplitz* rowBlockPtr = static_cast<BlockToeplitz*>(upperIncidenceMatrix);  //cast to BlockToeplitz pointer for further operations
 
-
     // 2.) Lower incidence matrix generation
     //     a.) Column block matrix generation
     SparseToeplitz columnBlockMatrix(rows, rows, 3); //leaf column block matrix with 3 diagonals
@@ -58,7 +57,6 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
     Matrix* lowerIncidenceMatrix = columnBlockMatrix.Kronecker(identityMatrixCols); // lower incidence matrix
     BlockToeplitz* lowerIncidencePtr = static_cast<BlockToeplitz*>(lowerIncidenceMatrix);  //cast to BlockToeplitz pointer for further operations
 
-
     // 4.) Final Laplacian matrix assembly
     //     a.) Concatenate upper and lower incidence matrices
     int ndiags = 2; //number of diagonals in incidence matrix
@@ -73,8 +71,8 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
     Incidence=new BlockToeplitz(IncidenceMatrix);
     Matrix* negTransPtr = IncidenceMatrix.negativeTranspose();
     //BlockToeplitz negTrans=*negTrans;
-    Incidence_T=(*negTransPtr).Clone(1);
-    BlockToeplitz* negTransBlockPtr = static_cast<BlockToeplitz*>(negTransPtr); //cast to BlockToeplitz pointer for further operations
+    Incidence_T=negTransPtr; //Maybe a  memory leak, but it works for now
+    //BlockToeplitz* negTransBlockPtr = static_cast<BlockToeplitz*>(negTransPtr); //cast to BlockToeplitz pointer for further operations
 
     //     c.) W_ee matrix generation function
     int dim = 2 * rows * cols;

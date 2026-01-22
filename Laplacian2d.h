@@ -8,14 +8,13 @@ class Laplacian2D_ToeplitzMatrix :Matrix{
 
     void generateMatrix(const int rows, const int cols);
 
-    Vectord Laplacian(Vectord& input);
+    virtual Vectord operator*(Vectord& vec);
     
     private:
     Matrix* Incidence; //the geometry of the problem
     Matrix* Diagonal;//This matrix encapsulates grid spacing and variable k
     Matrix* Incidence_T;//negative transpose of incidence matrix
 
-    virtual Vectord operator*(Vectord& vec);
     double k_func(double x, double y);    
 
 
