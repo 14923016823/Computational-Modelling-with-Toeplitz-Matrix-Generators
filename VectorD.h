@@ -20,11 +20,15 @@ public:
 
     Vectord(const std::initializer_list<double>& list);
 
-    int len();
+    int len() const;
 
     void print();
 
     void PrintVector();
 
     void Sum(Vectord VecIn);
+
+    double dot(Vectord& VecIn);
+
+    Vectord& scal(double c);
 };

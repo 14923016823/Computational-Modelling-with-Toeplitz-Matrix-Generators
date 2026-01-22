@@ -16,7 +16,7 @@ Vectord::Vectord(const std::initializer_list<double>& list)
     std::uninitialized_copy(list.begin(), list.end(), Vec);
 }
 
-int Vectord::len()
+int Vectord::len() const
 {
     return Length;
 }
@@ -44,7 +44,7 @@ void Vectord::PrintVector()
 
 void Vectord::Sum(Vectord VecIn)
 {
-    if(VecIn.Length!=Length)\
+    if(VecIn.Length!=Length)
     {
         throw std::invalid_argument("You can't sum vectors with different sizes");
     }
@@ -54,4 +54,27 @@ void Vectord::Sum(Vectord VecIn)
     {
         Vec[i]+=VecIn.Vec[i];
     }   
+}
+
+double Vectord::dot(Vectord& VecIn)
+{
+    if(VecIn.Length!=Length)
+    {
+        throw std::invalid_argument("You can't sum vectors with different sizes");
+    }
+    double s=0;
+    for(int i=0;i<Length;i++)
+    {
+        s+=Vec[i]*VecIn.Vec[i];
+    }
+    return s;   
+}
+
+Vectord& Vectord::scal(double c)
+{
+    for(int i=0;i<Length;i++)
+    {
+        Vec[i]*=c;
+    }
+    return (*this);
 }

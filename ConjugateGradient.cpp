@@ -4,21 +4,15 @@
 
 static inline double safe_sqrt(double v) { return (v > 0.0) ? std::sqrt(v) : 0.0; }
 
-int ConjugateGradient(Matrix& A,
-                      const Vectord& b,
-                      Vectord& x,
-                      int maxIters,
-                      double relTol,
-                      double absTol)
+int ConjugateGradient(Matrix& A,const Vectord& b,Vectord& x,int maxIters,double relTol,double absTol)
 {
     // Dimension checks
     if (A.rows() != b.len()) return -1;
     if (A.cols() <= 0) return -1;
 
-    // If x is empty or wrong size, resize and set x=0
+
     if (x.len() != A.cols()) {
-        x.resize(A.cols());
-        x.fill(0.0);
+        return -1;
     }
 
     // r = b - A*x
