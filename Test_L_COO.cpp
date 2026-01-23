@@ -2,8 +2,8 @@
 
 int main()
 {    
-    int rows = 30000;
-    int cols = 40000;
+    int rows = 3000;
+    int cols = 4000;
     int arrays = 1;
 
     Vectord vec(cols*rows*arrays);
@@ -19,7 +19,7 @@ int main()
     try
     {
         Vectord a = L2d*vec;
-        //a.print();
+        a.print();
     }
     catch(const char* msg)
     {

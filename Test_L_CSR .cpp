@@ -2,8 +2,8 @@
 
 int main()
 {    
-    int rows = 30000;
-    int cols = 40000;
+    int rows = 3000;
+    int cols = 4000;
     int arrays = 1;
 
     Vectord vec(cols*rows*arrays);
