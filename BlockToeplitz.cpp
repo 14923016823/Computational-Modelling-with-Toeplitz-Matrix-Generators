@@ -38,7 +38,7 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
     for(int i=0;i<Num_Diags;i++)
     {
         Diags[i]=other.Diags[i];
-        Vals[i]=other.Clone(c);
+        Vals[i]=other.Vals[i]->Clone(c);
     }
 
 }
@@ -59,7 +59,7 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
 
     Vectord result(Num_Rows);
     //int i;
-    //#pragma omp parallel for //private(i)
+    #pragma omp parallel for //private(i)
     for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
     {
         //int i = omp_get_thread_num();
@@ -82,6 +82,8 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
                     subinput.Vec[k] = vec.Vec[col_start + k]; 
                 }
                 Vectord subsubres = Vals[j]->operator*(subinput);
+                Vals[j]->printFullMatrix();
+                std::cout << subsubres.len() << std::endl;
                 subres.Sum(subsubres);
             }
         }
@@ -108,7 +110,6 @@ void BlockToeplitz::operator*=(double c)
 
 Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bottom of the chain every Num_Rows needs to be changed
 {
-
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
     //printf("num diags=%d\n",Num_Diags);
     //printf("vals[0],%d\n",Vals[0]);
@@ -118,7 +119,6 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
     {
         result->Diags[i]=Diags[i];
         result->Vals[i] = Vals[i]->Kronecker(B);
-        
     }
     return result;
 }
@@ -166,7 +166,8 @@ double BlockToeplitz::operator()(int i, int j) const
     return 0.0; // element is zero if not on any stored diagonal
 }
 
-void BlockToeplitz::printFullMatrix() {
+void BlockToeplitz::printFullMatrix() 
+{
     std::cout << "\nFull Dense Expansion (" << Num_Rows << "x" << Num_Cols << ")\n";
     int br = Vals[0]->rows();
     int bc = Vals[0]->cols();

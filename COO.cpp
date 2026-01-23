@@ -18,22 +18,23 @@ COO::COO(int num_rows, int num_cols, const std::initializer_list<tuple>& list)
 
 Vectord COO::operator*(Vectord& vect)
 {
-    int len = vect.Length;
+    printf("COO\n");
+    int len = vect.len();
     if (len != Num_Cols) 
     {
         throw std::invalid_argument("Vector and Matrix size don't match");
     }
     Vectord result(Num_Rows);
-    double value;
-    int row_ind;
-    int col_ind;
-    int i;
-    #pragma omp parallel for private(i, row_ind, col_ind, value)
-    for(i=0;i<Num_Vals;i++)
+    //double value;
+    //int row_ind;
+    //int col_ind;
+    //int i;
+    #pragma omp parallel for //private(i, row_ind, col_ind, value)
+    for(int i=0;i<Num_Vals;i++)
     {
-        row_ind = std::get<0>(Array[i]);
-        col_ind = std::get<1>(Array[i]);
-        value = std::get<2>(Array[i]);
+        int row_ind = std::get<0>(Array[i]);
+        int col_ind = std::get<1>(Array[i]);
+        double value = std::get<2>(Array[i]);
         result.Vec[row_ind] += value*vect.Vec[col_ind];
         //printf("i = %d\n",i);
     }
@@ -76,7 +77,7 @@ COO::COO(SparseToeplitz& ST)
         {
             Num_Vals += Num_Cols-f;
         }
-        else
+        else 
         {
             Num_Vals += Num_Rows+f;
         }
@@ -117,7 +118,7 @@ COO::COO(COO& other,double c)
     Num_Vals=other.Num_Vals;
     Array = new tuple[Num_Vals];
     int i;
-    //#pragma omp parallel for private(i)
+    #pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(Array[i])=std::get<0>(other.Array[i]);

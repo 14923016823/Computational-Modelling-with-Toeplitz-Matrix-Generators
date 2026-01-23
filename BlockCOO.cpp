@@ -38,46 +38,55 @@ Vectord BlockCOO::operator*(Vectord& vec)
 {
     if (vec.len() != Num_Cols)
     {
-        throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
+        throw std::invalid_argument("Vector length and matrix columns don't match (block_COO).");
     }
 
     int Num_Rows_SubMatrixes=std::get<2>(Array[0])->rows();
     int Num_Cols_SubMatrixes=std::get<2>(Array[0])->cols();
 
     
-    int Num_blockrows = Num_Rows / Num_Rows_SubMatrixes;
-    int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
+    //int Num_blockrows = Num_Rows / Num_Rows_SubMatrixes;
+    //int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
 
     Vectord result(Num_Rows);
-//#pragma omp parallel for
-    for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
-    {
+
         //int row = blockrow *;
-        Vectord subres(Num_Rows_SubMatrixes); // initialized to zeros
+        int j=0;
+     // initialized to zeros
         // accumulate contributions from each diagonal/block
-        for (int j = 0; j < Num_Vals; j++)
+//#pragma omp parallel for //private(subres)
+
+    for (j = 0; j < Num_Vals; j+=1)
+    {
+        printf("j=%d\n",j);
+        //Vectord subres(Num_Rows_SubMatrixes);
+        
+        int blockcol = std::get<1>(Array[j]);
+        int blockrow = std::get<0>(Array[j]);
+        // ensure the whole sub-block fits in input vector
+        
+        Vectord subinput(Num_Cols_SubMatrixes);
+        Vectord subsubres(blockcol);
+        int col_start=blockcol*Num_Cols_SubMatrixes;
+        for (int k = 0; k < Num_Cols_SubMatrixes; ++k)
         {
-            int blockcol = std::get<1>(Array[j]) + blockrow;
-            // ensure the whole sub-block fits in input vector
-            if (blockcol >= 0 && blockcol<Num_blockcols)
-            {
-                Vectord subinput(Num_Cols_SubMatrixes);
-                int col_start=blockcol*Num_Cols_SubMatrixes;
-                for (int k = 0; k < Num_Cols_SubMatrixes; ++k)
-                {
-                    subinput.Vec[k] = vec.Vec[col_start + k]; 
-                }
-                Vectord subsubres = std::get<2>(Array[j])->operator*(subinput);
-                subres.Sum(subsubres);
-            }
+            subinput.Vec[k] = vec.Vec[col_start + k]; 
         }
-        // copy accumulated block into result
+        printf("a\n");
+        
+        
+        subsubres = std::get<2>(Array[j])->operator*(subinput);
+        printf("hi\n");
+        //subres.Sum(subsubres);
+        
         int row_start=blockrow*Num_Rows_SubMatrixes;
         for (int k = 0; k < Num_Rows_SubMatrixes; ++k)
         {
-            result.Vec[row_start + k] = subres.Vec[k];
+            #pragma omp atomic update
+            result.Vec[row_start + k] += subsubres.Vec[k];
         }
     }
+        // copy accumulated block into result
     return result;
 }
 

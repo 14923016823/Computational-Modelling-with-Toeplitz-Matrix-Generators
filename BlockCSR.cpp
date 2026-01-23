@@ -25,7 +25,7 @@ BlockCSR::~BlockCSR()
     printf("deleting blockCSR\n");
     for(int i=0;i<Num_Vals;i++)
     {
-        delete[] Vals[i];
+        delete Vals[i];
     }
     delete[] Vals;
     delete[] Rows;
@@ -60,7 +60,7 @@ Vectord BlockCSR::operator*(Vectord& vec)
 {
     if (vec.len() != Num_Cols)
     {
-        throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
+        throw std::invalid_argument("Vector length and matrix columns don't match (block_CSR).");
     }
 
     int Num_Rows_SubMatrixes=Vals[0]->rows();
@@ -68,21 +68,19 @@ Vectord BlockCSR::operator*(Vectord& vec)
 
     
     int Num_blockrows = Num_Rows / Num_Rows_SubMatrixes;
-    int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
+    //int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
 
     Vectord result(Num_Rows);
-//#pragma omp parallel for
+#pragma omp parallel for
     for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
     {
         //int row = blockrow *;
         Vectord subres(Num_Rows_SubMatrixes); // initialized to zeros
-        // accumulate contributions from each diagonal/block
-        for (int j = 0; j < Num_Vals; j++)
+        // accumulate contributions from each block
+        for (int j = Rows[blockrow]; j < Rows[blockrow+1]; j++)
         {
-            int blockcol = Cols[j] + blockrow;
+            int blockcol = Cols[j];
             // ensure the whole sub-block fits in input vector
-            if (blockcol >= 0 && blockcol<Num_blockcols)
-            {
                 Vectord subinput(Num_Cols_SubMatrixes);
                 int col_start=blockcol*Num_Cols_SubMatrixes;
                 for (int k = 0; k < Num_Cols_SubMatrixes; ++k)
@@ -91,7 +89,6 @@ Vectord BlockCSR::operator*(Vectord& vec)
                 }
                 Vectord subsubres = Vals[j]->operator*(subinput);
                 subres.Sum(subsubres);
-            }
         }
         // copy accumulated block into result
         int row_start=blockrow*Num_Rows_SubMatrixes;
