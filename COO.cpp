@@ -18,7 +18,6 @@ COO::COO(int num_rows, int num_cols, const std::initializer_list<tuple>& list)
 
 Vectord COO::operator*(Vectord& vect)
 {
-    printf("COO\n");
     int len = vect.len();
     if (len != Num_Cols) 
     {
@@ -32,10 +31,9 @@ Vectord COO::operator*(Vectord& vect)
     #pragma omp parallel for //private(i, row_ind, col_ind, value)
     for(int i=0;i<Num_Vals;i++)
     {
-        int row_ind = std::get<0>(Array[i]);
-        int col_ind = std::get<1>(Array[i]);
-        double value = std::get<2>(Array[i]);
-        result.Vec[row_ind] += value*vect.Vec[col_ind];
+        double res_i = std::get<2>(Array[i])*vect.Vec[std::get<1>(Array[i])];
+        #pragma omp atomic update
+        result.Vec[std::get<0>(Array[i])] += res_i;
         //printf("i = %d\n",i);
     }
     return result;
