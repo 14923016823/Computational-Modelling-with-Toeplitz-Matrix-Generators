@@ -41,18 +41,18 @@ Vectord CSR::operator*(Vectord& vect)
     {
         //printf(" i = %d\n",i);
         //printf("%d\n",Rows[i+1]>Rows[i]);
-        int res_i = 0;
+        //int res_i = 0;
         //#pragma omp parallel for reduction(+ : res_i)
         for(int j=Rows[i];j<Rows[i+1];j++)
         {
             //printf(" j = %d\n",j);
             //printf("Cols[%d]=%d\n",c,Cols[c]);
             //printf("vect[%d]=%f\n",Cols[c],vect.Vec[Cols[c]]);
-            res_i = vect.Vec[Cols[j]]*Vals[j];
+            result.Vec[i] += vect.Vec[Cols[j]]*Vals[j];
             //printf("r[i]_j = %f\n",vect.Vec[Cols[c]]*Vals[c]);
             //printf("r[i]_tot = %f\n",result.Vec[i]);
         }
-        result.Vec[i] += res_i;
+        //result.Vec[i] += res_i;
     }
     return result;
 }
