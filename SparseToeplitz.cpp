@@ -60,25 +60,6 @@ Vectord SparseToeplitz::operator*(Vectord& vec)
     }
      
     }
-
-/*    int i;
-    int j;
-    //double res_i = 0;
-#pragma omp parallel for private(i,j)
-    for (i = 0;i < Num_Rows;i++)
-    {
-        //printf("i = %d \n", i);
-        //#pragma omp parallel for private(j) reduction(+ : res_i)
-        for (j = 0;j < Num_Diags;j++) 
-        {
-            //printf("j = %d \n", j);
-            if (Diags[j] + i >= 0 && Diags[j] + i < len)
-            {
-                result.Vec[i] += vec.Vec[Diags[j] + i] * Vals[j];
-            }
-        }
-        //result.Vec[i] += res_i;
-    }*/
    return result;
 }
 
