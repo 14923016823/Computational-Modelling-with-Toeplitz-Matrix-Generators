@@ -47,7 +47,21 @@ Vectord SparseToeplitz::operator*(Vectord& vec)
         throw std::invalid_argument("Vector and Matrix size dont match");
     }
     Vectord result = Vectord(Num_Rows);
-    int i;
+
+    for (int j = 0; j < Num_Diags; ++j) {
+    int d = Diags[j];
+    double v = Vals[j];
+
+    int i0 = std::max(0, -d);
+    int i1 = std::min(Num_Rows, Num_Cols - d);
+
+    for (int i = i0; i < i1; ++i) {
+        result.Vec[i] += v * vec.Vec[i + d];
+    }
+     
+    }
+
+/*    int i;
     int j;
     //double res_i = 0;
 #pragma omp parallel for private(i,j)
@@ -64,8 +78,8 @@ Vectord SparseToeplitz::operator*(Vectord& vec)
             }
         }
         //result.Vec[i] += res_i;
-    }
-    return result;
+    }*/
+   return result;
 }
 
 void SparseToeplitz::print()
