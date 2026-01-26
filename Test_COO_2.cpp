@@ -17,8 +17,8 @@ int main()
         n++;
     }
 
-    int STwidth = 40000;
-    int STheight = 40000;
+    int STwidth = 400000;
+    int STheight = 400000;
     Vectord x(STwidth);
     for(int i=0;i<STwidth;i++)
     {
