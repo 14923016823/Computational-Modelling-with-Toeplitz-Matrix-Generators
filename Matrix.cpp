@@ -22,3 +22,9 @@ void Matrix::operator*=(double scalar)
 void Matrix::print(){}
 
 void Matrix::printFullMatrix(){}
+
+void Matrix::MatMulAdd(const Vectord& x, const int x_start,Vectord& result,const int result_start)
+{ }
+
+void Matrix::MatMul(const Vectord& x,Vectord& result)
+{ }

@@ -55,6 +55,8 @@ void BlockToeplitz::MatMulAdd(const Vectord& x,const int x_start,Vectord& result
     {
         int d = Diags[k];       // block-local diagonal
         Matrix* B = Vals[k];    // the block
+        //std::cout << d << std::endl;
+        //std::cout << Vals[k]->rows() << " " << Vals[k]->cols() << "\n";
     
         if (d >= 0) 
         {
@@ -69,17 +71,17 @@ void BlockToeplitz::MatMulAdd(const Vectord& x,const int x_start,Vectord& result
             int numBlocks=std::min(numBlockRows+d,numBlockCols);
             for(int i=0;i<numBlocks;i++)
             {
-                B->MatMulAdd(x,x_start+i*bc,result,result_start+(i+d)*br);
+                B->MatMulAdd(x,x_start+i*bc,result,result_start+(i-d)*br);
             }
         }
     }
 }
 
-void SparseToeplitz::MatMul(const Vectord& x,Vectord& result)
+void BlockToeplitz::MatMul(const Vectord& x,Vectord& result)
 {
     if(x.len()!=Num_Cols||result.len()!=Num_Rows)
     {
-        throw std::invalid_argument("Vector and Matrix size dont match matmul");
+        throw std::invalid_argument("Vector and Matrix size dont match matmul (BT)");
     }
     for(int i=0;i<result.len();i++)
     {
@@ -88,13 +90,13 @@ void SparseToeplitz::MatMul(const Vectord& x,Vectord& result)
     MatMulAdd(x,0,result,0);
 }
 
-Vectord SparseToeplitz::operator*(Vectord& vec)//try not to use this function
+Vectord BlockToeplitz::operator*(Vectord& vec)//try not to use this function
 {
     Vectord result = Vectord(Num_Rows);
     MatMul(vec,result);
     return result;
 }
-
+/*
 Vectord BlockToeplitz::operator*(Vectord& vec)
 {
     if (vec.len() != Num_Cols)
@@ -148,7 +150,7 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
     }
     return result;
 }
-
+*/
 void BlockToeplitz::operator*=(double c)
 {
     int i;

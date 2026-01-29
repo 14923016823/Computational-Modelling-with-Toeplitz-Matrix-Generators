@@ -46,7 +46,7 @@ void DiagonalMatrix::MatMulAdd(const Vectord& x,const int x_start,Vectord& resul
 
     for (int i = 0; i < Num_Cols; i++) 
     {
-        result[result_start+i] += Diag_Vals[x_start+i] * x[i];
+        result[result_start+i] += Diag_Vals[i] * x[x_start+i];
     }
 }
 void DiagonalMatrix::MatMul(const Vectord& x,Vectord& result)

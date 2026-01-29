@@ -98,24 +98,33 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
 
     Diagonal=W_ee_matrix.Clone(1.0);
     //Incidence->printFullMatrix();
+    Tmp1= Vectord(Incidence->rows());
+    Tmp2=Vectord(Incidence->rows());
     //Incidence_T->printFullMatrix();
 }
 
-Vectord Laplacian2D_ToeplitzMatrix::operator*(Vectord& input)
+void Laplacian2D_ToeplitzMatrix::Laplacian2d(const Vectord& input,Vectord& result)
 {
     //std::cout << "a\n";
     //Incidence->printFullMatrix();
     //Incidence_T->printFullMatrix();
     //input.print();
-    Vectord b2 = Incidence->operator*(input);
+    Incidence->printFullMatrix();
+    Incidence_T->printFullMatrix();
+    std::cout << "0\n";
+    
+    Incidence->MatMul(input,Tmp1);
+    std::cout << "1\n";
     //b2.print();
     //std::cout << "b\n";
-    Vectord Wb = (*Diagonal) * b2;
+    //Vectord Wb(Diagonal->rows());
+    Diagonal->MatMul(Tmp1,Tmp2);
+    std::cout << "2\n";
     //Wb.print();
     //std::cout << "c\n";
-    Vectord final_b = (*Incidence_T) * Wb;
-    //final_b.print();
-    return final_b;
+    //Vectord final_b(Incidence_T->rows());
+    Incidence_T->MatMul(Tmp2,result);
+
 }
 
 //Function that makes the COO Laplacian matrix
@@ -305,15 +314,3 @@ CSR Laplacian2D_ToeplitzMatrix::CSR_Laplacian()
     
     return result;
 }
-
-void Laplacian2D_ToeplitzMatrix::operator*=(double c){throw std::invalid_argument("Not implemented");}
-   
-Matrix* Laplacian2D_ToeplitzMatrix::Kronecker(Matrix& B) {throw std::invalid_argument("Not implemented");}
-
-Matrix* Laplacian2D_ToeplitzMatrix::Clone(double c) {throw std::invalid_argument("Not implemented");}
-
-Matrix* Laplacian2D_ToeplitzMatrix::negativeTranspose() {throw std::invalid_argument("Not implemented");}
-    
-void Laplacian2D_ToeplitzMatrix::printFullMatrix() {throw std::invalid_argument("Not implemented");}
-    
-double Laplacian2D_ToeplitzMatrix::operator()(int i, int j) const {throw std::invalid_argument("Not implemented");}

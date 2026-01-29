@@ -16,6 +16,8 @@ class Vectord
 public:
     int Length;
     double* Vec;
+    Vectord();
+
     Vectord(int length);
 
     Vectord(const std::initializer_list<double>& list);

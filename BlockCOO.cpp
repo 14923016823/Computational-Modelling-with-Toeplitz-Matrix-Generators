@@ -29,7 +29,7 @@ BlockCOO::BlockCOO(BlockCOO& other,double c)
     Array = new mtuple[Num_Vals];
     for(int i=0;i<Num_Vals;i++)
     {
-        (*std::get<2>(Array[i]))*=c;
+        std::get<2>(Array[i])=std::get<2>(other.Array[i])->Clone(c);
     }
 
 }
@@ -58,7 +58,7 @@ Vectord BlockCOO::operator*(Vectord& vec)
 
     for (j = 0; j < Num_Vals; j+=1)
     {
-        printf("j=%d\n",j);
+        //printf("j=%d\n",j);
         //Vectord subres(Num_Rows_SubMatrixes);
         
         int blockcol = std::get<1>(Array[j]);
@@ -72,17 +72,17 @@ Vectord BlockCOO::operator*(Vectord& vec)
         {
             subinput.Vec[k] = vec.Vec[col_start + k]; 
         }
-        printf("a\n");
+        //printf("a\n");
         
         
         subsubres = std::get<2>(Array[j])->operator*(subinput);
-        printf("hi\n");
+        //printf("hi\n");
         //subres.Sum(subsubres);
         
         int row_start=blockrow*Num_Rows_SubMatrixes;
         for (int k = 0; k < Num_Rows_SubMatrixes; ++k)
         {
-            #pragma omp atomic update
+            //#pragma omp atomic update
             result.Vec[row_start + k] += subsubres.Vec[k];
         }
     }
@@ -175,7 +175,7 @@ Matrix* BlockCOO::negativeTranspose()
     int Rows[Num_Cols/block_cols+1]; //Array to count entries per row in transposed matrix
     for(int j=0;j<Num_Cols/block_cols+1;j++)
         Rows[j] = 0;
-#pragma omp parallel for
+//#pragma omp parallel for
     for(int c=0;c<Num_Cols/block_cols;c++) //Go through columns of original matrix
     {
         for(int i=0;i<Num_Vals;i++) //Go through values
@@ -194,7 +194,7 @@ Matrix* BlockCOO::negativeTranspose()
     }
 
     int n;
-    #pragma omp parallel for private(n)
+    //#pragma omp parallel for private(n)
     for(int c=0;c<Num_Cols/block_cols;c++) //Cols of original matrix, so rows of transposed matrix
     {
         n=Rows[c];
@@ -250,4 +250,14 @@ void BlockCOO::printFullMatrix()
         }
         std::cout << "\n";
     }
+}
+
+void BlockCOO::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
+{
+    throw std::invalid_argument("Not implemented");
+}
+
+void BlockCOO::MatMul(const Vectord& x,Vectord& result)
+{
+    throw std::invalid_argument("Not implemented");
 }

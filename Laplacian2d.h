@@ -3,7 +3,7 @@
 #include "COO.h"
 #include "CSR.h"
 
-class Laplacian2D_ToeplitzMatrix :Matrix{
+class Laplacian2D_ToeplitzMatrix{
     public:
 
     Laplacian2D_ToeplitzMatrix(const int rows, const int cols);
@@ -12,7 +12,7 @@ class Laplacian2D_ToeplitzMatrix :Matrix{
 
     void generateMatrix(const int rows, const int cols);
 
-    virtual Vectord operator*(Vectord& vec);
+    void Laplacian2d(const Vectord& x,Vectord& result);
 
     COO COO_Laplacian();
     CSR CSR_Laplacian();
@@ -24,15 +24,9 @@ class Laplacian2D_ToeplitzMatrix :Matrix{
     Matrix* Incidence_T;//negative transpose of incidence matrix
 
     double k_func(double x, double y);    
-
-
-    void operator*=(double c) override;//all of these are not implemented
-    Matrix* Kronecker(Matrix& B) override;
-    Matrix* Clone(double c) override;
-    Matrix* negativeTranspose() override;
-    void printFullMatrix() override;
-    double operator()(int i, int j) const override;
     
+    Vectord Tmp1;
+    Vectord Tmp2;
 
     //Vectord generateMatrix(const int rows, const int cols, Vectord& b1);
 };

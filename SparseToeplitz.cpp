@@ -70,7 +70,7 @@ void SparseToeplitz::MatMul(const Vectord& x,Vectord& result)
 {
     if(x.len()!=Num_Cols||result.len()!=Num_Rows)
     {
-        throw std::invalid_argument("Vector and Matrix size dont match matmul");
+        throw std::invalid_argument("Vector and Matrix size dont match matmul (ST)");
     }
     for(int i=0;i<result.len();i++)
     {

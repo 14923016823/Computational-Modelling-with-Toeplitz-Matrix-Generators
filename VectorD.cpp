@@ -1,5 +1,10 @@
 #include "VectorD.h"
 
+Vectord::Vectord()
+{
+    Length = 0;
+}
+
 Vectord::Vectord(int length)
 {
     Length = length;

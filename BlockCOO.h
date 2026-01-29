@@ -38,5 +38,8 @@ public:
     void printFullMatrix() override;
     
     double operator()(int i, int j) const override;
+
+    void MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start) override;
+    void MatMul(const Vectord& x,Vectord& result) override;
 };
 

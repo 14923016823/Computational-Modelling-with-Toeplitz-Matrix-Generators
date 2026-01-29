@@ -47,7 +47,7 @@ BlockCSR::BlockCSR(BlockCSR& other,double c)
     for(int i=0;i<Num_Vals;i++)
     {
         Cols[i]=other.Cols[i];
-        Vals[i]=other.Clone(c);
+        Vals[i]=(other.Vals[i])->Clone(c);
     }
     for(int i=0;i<Num_Rows+1;i++)
     {
@@ -62,16 +62,18 @@ Vectord BlockCSR::operator*(Vectord& vec)
     {
         throw std::invalid_argument("Vector length and matrix columns don't match (block_CSR).");
     }
-
+    
+    //std::cout << Vals[0]->rows() << "?\n";
+    
     int Num_Rows_SubMatrixes=Vals[0]->rows();
     int Num_Cols_SubMatrixes=Vals[0]->cols();
 
     
     int Num_blockrows = Num_Rows / Num_Rows_SubMatrixes;
     //int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
-
     Vectord result(Num_Rows);
-#pragma omp parallel for
+    
+//#pragma omp parallel for
     for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
     {
         //int row = blockrow *;
@@ -167,7 +169,7 @@ Matrix* BlockCSR::negativeTranspose()
     
     BlockCSR* negTrans = new BlockCSR(Num_Cols, Num_Rows, Num_Vals);
     int n;
-    #pragma omp parallel for private(n)
+    //#pragma omp parallel for private(n)
     for(int c=0;c<Num_Cols/block_cols;c++) //Loop over columns of original matrix
     {
         n=0;
@@ -189,7 +191,7 @@ Matrix* BlockCSR::negativeTranspose()
     }
     //All of the above is just making the Rows array, below is actually inserting values with correct column indices
     int m;
-    #pragma omp parallel for private(m)
+    //#pragma omp parallel for private(m)
     for(int c=0;c<Num_Cols/block_cols;c++) //Loop over columns of original matrix
     {
         m=0;
@@ -231,4 +233,14 @@ void BlockCSR::printFullMatrix()
         }
         std::cout << "\n";
     }
+}
+
+void BlockCSR::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
+{
+    throw std::invalid_argument("Not implemented");
+}
+
+void BlockCSR::MatMul(const Vectord& x,Vectord& result)
+{
+    throw std::invalid_argument("Not implemented");
 }
