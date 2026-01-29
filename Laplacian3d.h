@@ -1,29 +1,25 @@
+#pragma once
+
 #include "BlockToeplitz.h"
 #include "DiagonalMatrix.h"
 #include "COO.h"
 #include "CSR.h"
 
-class Laplacian2D_ToeplitzMatrix :Matrix{
+class Laplacian3D_ToeplitzMatrix :Matrix{
     public:
 
-    Laplacian2D_ToeplitzMatrix(const int rows, const int cols);
+    Laplacian3D_ToeplitzMatrix(const int rows, const int cols, const int arrays);
 
-    ~Laplacian2D_ToeplitzMatrix();
-
-    void generateMatrix(const int rows, const int cols);
+    void generateMatrix(const int rows, const int cols, const int arrays);
 
     virtual Vectord operator*(Vectord& vec);
-
-    COO COO_Laplacian();
-    CSR CSR_Laplacian();
-
     
     private:
     Matrix* Incidence; //the geometry of the problem
     Matrix* Diagonal;//This matrix encapsulates grid spacing and variable k
     Matrix* Incidence_T;//negative transpose of incidence matrix
 
-    double k_func(double x, double y);    
+    double k_func(double x, double y, double z);    
 
 
     void operator*=(double c) override;//all of these are not implemented
@@ -32,7 +28,9 @@ class Laplacian2D_ToeplitzMatrix :Matrix{
     Matrix* negativeTranspose() override;
     void printFullMatrix() override;
     double operator()(int i, int j) const override;
-    
+
+    COO COO_Laplacian();
+    CSR CSR_Laplacian();
 
     //Vectord generateMatrix(const int rows, const int cols, Vectord& b1);
 };

@@ -8,6 +8,7 @@ typedef std::tuple<int,int,double> tuple;
 #include "VectorD.h"
 #include "SparseToeplitz.h"
 #include "BlockCOO.h"
+#include "BlockToeplitz.h"
 
 class COO: public Matrix
 {
@@ -23,9 +24,12 @@ public:
 
     Vectord operator*(Vectord& vect);
 
+
     void print();
 
     COO(SparseToeplitz& ST);
+
+    COO(BlockToeplitz& ST);
 
     ~COO();
 

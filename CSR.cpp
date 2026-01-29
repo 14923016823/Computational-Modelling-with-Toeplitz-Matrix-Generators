@@ -36,23 +36,23 @@ Vectord CSR::operator*(Vectord& vect)
     Vectord result(Num_Rows);
     //int i=0;
     //int j=0;
-    #pragma omp parallel for //num_threads(12)// private(i,j) 
+    //#pragma omp parallel for //num_threads(12)// private(i,j) 
     for(int i=0;i<Num_Rows;i++)
     {
         //printf(" i = %d\n",i);
         //printf("%d\n",Rows[i+1]>Rows[i]);
-        //int res_i = 0;
+        double res_i = 0;
         //#pragma omp parallel for reduction(+ : res_i)
         for(int j=Rows[i];j<Rows[i+1];j++)
         {
             //printf(" j = %d\n",j);
             //printf("Cols[%d]=%d\n",c,Cols[c]);
             //printf("vect[%d]=%f\n",Cols[c],vect.Vec[Cols[c]]);
-            result.Vec[i] += vect.Vec[Cols[j]]*Vals[j];
+            res_i += vect.Vec[Cols[j]]*Vals[j];
             //printf("r[i]_j = %f\n",vect.Vec[Cols[c]]*Vals[c]);
             //printf("r[i]_tot = %f\n",result.Vec[i]);
         }
-        //result.Vec[i] += res_i;
+        result.Vec[i] += res_i;
     }
     return result;
 }
@@ -176,7 +176,7 @@ Matrix* CSR::Kronecker(Matrix& B)
     BlockCSR* result = new BlockCSR(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     int i;
     result->Rows[0]=0;
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         result->Cols[i] = Cols[i];
@@ -208,7 +208,7 @@ Matrix* CSR::negativeTranspose()
     CSR* negTrans = new CSR(Num_Cols, Num_Rows, Num_Vals);
     negTrans->Rows[0] = 0;
     int n;
-    #pragma omp parallel for private(n)
+    //#pragma omp parallel for private(n)
     for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
     {
         n=0;
@@ -231,7 +231,7 @@ Matrix* CSR::negativeTranspose()
     }
     //All of the above is just making the Rows array, below is actually inserting values with correct column indices
     int m;
-    #pragma omp parallel for private(m)
+    //#pragma omp parallel for private(m)
     for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
     {
         m=0;
@@ -274,8 +274,44 @@ void CSR::printFullMatrix()
     for (int i = 0; i < Num_Rows; ++i) {
         for (int j = 0; j < Num_Cols; ++j)
         {
-            std::cout << std::setw(4) << this->operator()(i,j);
+            std::cout << std::setw(6) << this->operator()(i,j);
         }
         std::cout << "\n";
+    }
+}
+
+CSR::CSR(BlockToeplitz& BT)
+{ //This conversion algorithm is very inefficient, but works fine for now
+    Num_Vals = 0;
+    Num_Cols = BT.cols();
+    Num_Rows = BT.rows();
+    Rows = new int[Num_Rows+1];
+    Rows[0] = 0;
+
+    for (int i = 0; i < Num_Rows; i++) {
+        for (int j = 0; j < Num_Cols; j++)
+        {
+            if(BT.operator()(i,j) != 0.0)
+            {
+                Num_Vals++;
+            }
+        }
+        Rows[i+1] = Num_Vals;
+    }
+
+    Vals = new double[Num_Vals];
+    Cols = new int[Num_Vals];
+    int n = 0;
+
+    for (int i = 0; i < Num_Rows; i++) {
+        for (int j = 0; j < Num_Cols; j++)
+        {
+            if(BT.operator()(i,j) != 0.0)
+            {
+                Cols[n] = j;
+                Vals[n] = BT.operator()(i,j);
+                n++;
+            }
+        }
     }
 }

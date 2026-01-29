@@ -1,0 +1,340 @@
+#include "Laplacian3d.h"
+
+Laplacian3D_ToeplitzMatrix::Laplacian3D_ToeplitzMatrix(const int rows, const int cols, const int arrays) {
+    // Generate the Laplacian matrix with non-homogeneous spacing and variable k
+    generateMatrix(rows, cols, arrays);
+}
+    
+
+
+double Laplacian3D_ToeplitzMatrix::k_func(double x, double y, double z) {
+    // Example variable k function; modify as needed
+    return 1.0 + 0.5 * (x + y + z);
+}
+
+void Laplacian3D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, const int arrays) 
+{
+    // Implementation for generating the Laplacian matrix with non-homogeneous mesh spacing and variable k
+
+
+    // 1.)Upper incidence matrix generation (2D)
+    //     a.) Row block matrix generation
+    SparseToeplitz rowBlockMatrix = SparseToeplitz(cols, cols, 3); //leaf row block matrix with 3 diagonals
+    rowBlockMatrix.Diags[0] = -(cols - 1);
+    rowBlockMatrix.Diags[1] = 0;
+    rowBlockMatrix.Diags[2] = 1;
+    rowBlockMatrix.Vals[0] = 1;
+    rowBlockMatrix.Vals[1] = -1;
+    rowBlockMatrix.Vals[2] = 1;
+
+    //     b.) Identity matrix generation for upper incidence matrix
+    SparseToeplitz identityMatrixRows = SparseToeplitz(rows, rows, 1); //leaf identity matrix
+    identityMatrixRows.Diags[0] = 0;
+    identityMatrixRows.Vals[0] = 1;
+
+    //     c.) Identity matrix (rows) kronecker product with row block matrix
+    Matrix* upperIncidenceMatrix = identityMatrixRows.Kronecker(rowBlockMatrix); // upper incidence matrix
+    BlockToeplitz* rowBlockPtr = static_cast<BlockToeplitz*>(upperIncidenceMatrix);  //cast to BlockToeplitz pointer for further operations
+
+
+    // 2.) Lower incidence matrix generation (2D)
+    //     a.) Column block matrix generation
+    SparseToeplitz columnBlockMatrix(rows, rows, 3); //leaf column block matrix with 3 diagonals
+    columnBlockMatrix.Diags[0] = -(rows - 1);
+    columnBlockMatrix.Diags[1] = 0;
+    columnBlockMatrix.Diags[2] = 1;
+    columnBlockMatrix.Vals[0] = 1;
+    columnBlockMatrix.Vals[1] = -1;
+    columnBlockMatrix.Vals[2] = 1;
+
+    //     b.) Identity matrix generation for lower incidence matrix
+    SparseToeplitz identityMatrixCols(cols, cols, 1); //leaf identity matrix
+    identityMatrixCols.Diags[0] = 0;
+    identityMatrixCols.Vals[0] = 1;
+
+    //     c.) Column block matrix kronecker product with identity matrix (cols)
+    Matrix* lowerIncidenceMatrix = columnBlockMatrix.Kronecker(identityMatrixCols); // lower incidence matrix
+    BlockToeplitz* lowerIncidencePtr = static_cast<BlockToeplitz*>(lowerIncidenceMatrix);  //cast to BlockToeplitz pointer for further operations
+
+    // 3.) Lower incidence matrix generation (3D)
+    //     a.) Array block matrix generation
+    SparseToeplitz arrayBlockMatrix(arrays, arrays, 3); //leaf array block matrix with 3 diagonals
+    arrayBlockMatrix.Diags[0] = -(arrays - 1);
+    arrayBlockMatrix.Diags[1] = 0;
+    arrayBlockMatrix.Diags[2] = 1;
+    arrayBlockMatrix.Vals[0] = 1;
+    arrayBlockMatrix.Vals[1] = -1;
+    arrayBlockMatrix.Vals[2] = 1;
+
+    //     b.) Identity matrix generation for lower incidence matrix
+    SparseToeplitz identityMatrixArrays(arrays, arrays, 1); //leaf identity matrix
+    identityMatrixArrays.Diags[0] = 0;
+    identityMatrixArrays.Vals[0] = 1;
+    SparseToeplitz identityMatrix_2D(rows*cols, rows*cols, 1);
+    identityMatrix_2D.Diags[0] = 0;
+    identityMatrix_2D.Vals[0] = 1;
+
+    //     c.) Column block matrix kronecker product with identity matrix (arrays)
+    Matrix* lowerIncidenceMatrix_3D = arrayBlockMatrix.Kronecker(identityMatrix_2D); // lower incidence matrix
+    BlockToeplitz* lowerIncidencePtr_3D = static_cast<BlockToeplitz*>(lowerIncidenceMatrix_3D);  //cast to BlockToeplitz pointer for further operations
+
+    // 4.) Final Laplacian matrix assembly
+    //     a.) Concatenate upper and lower incidence matrices
+    int ndiags = 2; //number of diagonals in incidence matrix
+    BlockToeplitz IncidenceMatrix_2D(rows * cols * 2, rows * cols, ndiags); // incidence matrix with 2 block rows
+    IncidenceMatrix_2D.Diags[0] = 0; // diagonal for upper incidence matrix
+    IncidenceMatrix_2D.Diags[1] = -1; // diagonal for lower incidence matrix
+    IncidenceMatrix_2D.Vals[0] = rowBlockPtr;
+    IncidenceMatrix_2D.Vals[1] = lowerIncidencePtr;
+    //Incidence=&IncidenceMatrix;
+
+    IncidenceMatrix_2D.printFullMatrix();
+    Matrix* upperIncidenceMatrix_3D(identityMatrixArrays.Kronecker(IncidenceMatrix_2D)); // upper incidence matrix
+    upperIncidenceMatrix_3D->printFullMatrix();
+    BlockToeplitz* BlockPtr_2D = static_cast<BlockToeplitz*>(upperIncidenceMatrix_3D);  //cast to BlockToeplitz pointer for further operations
+    BlockPtr_2D->printFullMatrix();
+    
+    BlockToeplitz IncidenceMatrix_3D(rows * cols * arrays * 3, rows * cols * arrays, ndiags); // incidence matrix with 2 block rows
+    IncidenceMatrix_3D.Diags[0] = 0; // diagonal for upper incidence matrix
+    IncidenceMatrix_3D.Diags[1] = -1; // diagonal for lower incidence matrix
+    IncidenceMatrix_3D.Vals[0] = BlockPtr_2D;
+    IncidenceMatrix_3D.Vals[1] = lowerIncidencePtr_3D;
+    
+    //     b.) Compute negative transpose
+    Incidence=new BlockToeplitz(IncidenceMatrix_3D);
+    Incidence->printFullMatrix(); //This print also returns an error because of inconsistent block sizes
+    Matrix* negTransPtr = IncidenceMatrix_3D.negativeTranspose();
+    //BlockToeplitz negTrans=*negTrans;
+    Incidence_T=negTransPtr;
+    //BlockToeplitz* negTransBlockPtr = static_cast<BlockToeplitz*>(negTransPtr); //cast to BlockToeplitz pointer for further operations
+
+    //     c.) W_ee matrix generation function
+    int dim = 3 * rows * cols * arrays;
+
+    DiagonalMatrix W_ee_matrix(dim);
+
+double dx = 1.0 / cols;
+double dy = 1.0 / rows;
+double dz = 1.0 / arrays;
+
+for (int i = 0; i < dim; ++i) 
+{
+    int col = i % cols;
+    int row = i / cols;  
+    int arr = i;
+    double x = col * dx;
+    double y = row * dy;
+    double z = arr * dz;
+    double k_val = k_func(x, y, z);
+    W_ee_matrix.Diag_Vals[i] = k_val/(dx*dy*dz);  // use dx (or dy) for spacing
+}
+
+    Diagonal=W_ee_matrix.Clone(1.0);
+}
+
+Vectord Laplacian3D_ToeplitzMatrix::operator*(Vectord& input)
+{
+    Vectord b2 = (*Incidence) * input;
+    Vectord Wb = (*Diagonal) * b2;
+    Vectord final_b = (*Incidence_T) * Wb;
+    return final_b;
+}
+
+COO Laplacian3D_ToeplitzMatrix::COO_Laplacian()
+{
+    //COO Incidence_COO(*static_cast<BlockToeplitz*>(Incidence));
+    COO Incidence_T_COO(*static_cast<BlockToeplitz*>(Incidence_T));
+    DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
+    for(int i = 0; i<Incidence_T_COO.Num_Vals;i++)
+    {
+        std::get<2>(Incidence_T_COO.Array[i])*=Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]/2.0;
+    }
+
+    int N = 0;
+    int val_tot = 0;
+    int n_c;
+
+    for(int c=0;c<Incidence_T_COO.rows();c++)
+    {
+        n_c = 0;
+        for(int i = val_tot;i<Incidence_T_COO.Num_Vals;i++)
+        {
+            if(std::get<0>(Incidence_T_COO.Array[i])==c)
+            {
+                n_c++;
+                val_tot++;
+            }
+            if(std::get<0>(Incidence_T_COO.Array[i])>c)
+            {
+                break;
+            }
+        }
+        N += (2*n_c-3);
+    }
+
+    COO result(Incidence_T_COO.rows(), Incidence_T_COO.rows(), N);
+
+    int n = 0;
+    double sum;
+    bool changed;
+    for(int r = 0; r<Incidence_T_COO.rows(); r++)
+    {
+        //printf("r=%d\n",r);
+        for(int c = 0; c<Incidence_T_COO.rows(); c++)
+        {
+            //printf("c=%d\n",c);
+            //Create values on and above main diagonal
+            if(r<=c) 
+            {
+                changed=false;
+                sum = 0.0;
+                for(int i = 0; i<Incidence_T_COO.Num_Vals; i++) 
+                //i was suupposed to start from k to avoid unnecessary steps, but something went wrong
+                {
+                    if(r == std::get<0>(Incidence_T_COO.Array[i]))
+                    {
+                        for(int j = i; j<Incidence_T_COO.Num_Vals; j++)
+                        {
+                            if(c == std::get<0>(Incidence_T_COO.Array[j]) 
+                                && std::get<1>(Incidence_T_COO.Array[i])==std::get<1>(Incidence_T_COO.Array[j]))
+                            {
+                                sum += std::get<2>(Incidence_T_COO.Array[j])*std::get<2>(Incidence_T_COO.Array[i]);
+                                changed= true;
+                                break;
+                            }
+                            if(c<std::get<0>(Incidence_T_COO.Array[j]))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    if(r<std::get<0>(Incidence_T_COO.Array[i]))
+                    {
+                        if(changed==true)
+                        {
+                            std::get<2>(result.Array[n]) = -sum;
+                            std::get<0>(result.Array[n]) = r;
+                            std::get<1>(result.Array[n]) = c;
+                            n++;
+                        }
+                        break;
+                    }
+                }
+            }
+            //Check for pre-existing values due to symmetry, insert values below main diagonal
+            else
+            {
+                for(int i = 0; i<n; i++) 
+                {   
+                    if(r == std::get<1>(result.Array[i]) && c == std::get<0>(result.Array[i]))
+                    {
+                        std::get<1>(result.Array[n]) = std::get<0>(result.Array[i]);
+                        std::get<0>(result.Array[n]) = std::get<1>(result.Array[i]);
+                        std::get<2>(result.Array[n]) = std::get<2>(result.Array[i]);
+                        n++;
+                    }
+                }
+            }
+        }
+    }
+    //Set last value
+    if(changed==true)
+        {
+            std::get<2>(result.Array[n]) = -sum;
+            std::get<0>(result.Array[n]) = Incidence_T_COO.rows()-1;
+            std::get<1>(result.Array[n]) = Incidence_T_COO.rows()-1;
+            n++;
+        }
+    return result;
+}
+
+CSR Laplacian3D_ToeplitzMatrix::CSR_Laplacian()
+{
+    //CSR Incidence_CSR(*static_cast<BlockToeplitz*>(Incidence));
+    CSR Incidence_T_CSR(*static_cast<BlockToeplitz*>(Incidence_T));
+    DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
+    for(int i = 0; i<Incidence_T_CSR.rows();i++)
+    {
+        for(int j = Incidence_T_CSR.Rows[i]; j<Incidence_T_CSR.Rows[i+1];j++)   
+        { 
+            Incidence_T_CSR.Vals[j]*=Diag->Diag_Vals[i]/2.0;
+        }
+    }
+
+    int N = 0;
+
+    for(int c=0;c<Incidence_T_CSR.rows();c++)
+    {
+        N += (2*(Incidence_T_CSR.Rows[c+1]-Incidence_T_CSR.Rows[c])-3);
+    }
+
+    CSR result(Incidence_T_CSR.rows(), Incidence_T_CSR.rows(), N);
+
+    double sum;
+    bool changed;
+    for(int r = 0; r<Incidence_T_CSR.rows(); r++)
+    {
+        //printf("r = %d\n", r);
+        result.Rows[r+1] = result.Rows[r];
+        for(int c = 0; c<Incidence_T_CSR.rows(); c++)
+        {
+            //Create values on and above main diagonal
+            //printf("c = %d\n", c);
+            if(r<=c) 
+            {
+                sum = 0.0;
+                changed = false;
+                for(int i = Incidence_T_CSR.Rows[r]; i<Incidence_T_CSR.Rows[r+1]; i++)
+                {
+                    for(int j = Incidence_T_CSR.Rows[c]; j<Incidence_T_CSR.Rows[c+1]; j++)
+                    {
+                        if(Incidence_T_CSR.Cols[i]==Incidence_T_CSR.Cols[j])
+                        {
+                            sum += Incidence_T_CSR.Vals[j]*Incidence_T_CSR.Vals[i];
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+                if(changed==true)
+                {
+                    result.Vals[result.Rows[r+1]] = -sum;
+                    result.Cols[result.Rows[r+1]] = c;
+                    result.Rows[r+1]++;
+                    //break;
+                }
+            }
+            //Check for pre-existing values due to symmetry, insert values below main diagonal
+            else
+            {
+                for(int i = 0; i<r; i++) 
+                {   
+                    for(int j = result.Rows[c]; j<result.Rows[c+1];j++)
+                    {
+                        if(r == result.Cols[j] && c == i)
+                        {
+                            result.Vals[result.Rows[r+1]] = result.Vals[j];
+                            result.Cols[result.Rows[r+1]] = i;
+                            result.Rows[r+1]++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return result;
+}
+
+void Laplacian3D_ToeplitzMatrix::operator*=(double c){throw std::invalid_argument("Not implemented");}
+   
+Matrix* Laplacian3D_ToeplitzMatrix::Kronecker(Matrix& B) {throw std::invalid_argument("Not implemented");}
+
+Matrix* Laplacian3D_ToeplitzMatrix::Clone(double c) {throw std::invalid_argument("Not implemented");}
+
+Matrix* Laplacian3D_ToeplitzMatrix::negativeTranspose() {throw std::invalid_argument("Not implemented");}
+    
+void Laplacian3D_ToeplitzMatrix::printFullMatrix() {throw std::invalid_argument("Not implemented");}
+    
+double Laplacian3D_ToeplitzMatrix::operator()(int i, int j) const {throw std::invalid_argument("Not implemented");}
