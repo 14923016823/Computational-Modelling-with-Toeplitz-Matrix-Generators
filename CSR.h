@@ -5,6 +5,7 @@
 #include "SparseToeplitz.h"
 #include "BlockCSR.h"
 #include "COO.h"
+#include "BlockToeplitz.h"
 
 
 class CSR: public Matrix
@@ -28,6 +29,8 @@ public:
     Vectord operator*(Vectord& vec);
 
     CSR(SparseToeplitz& ST);
+
+    CSR(BlockToeplitz& ST);
 
     void print();
 

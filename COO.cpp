@@ -28,11 +28,11 @@ Vectord COO::operator*(Vectord& vect)
     //int row_ind;
     //int col_ind;
     //int i;
-    #pragma omp parallel for //private(i, row_ind, col_ind, value)
+    //#pragma omp parallel for //private(i, row_ind, col_ind, value)
     for(int i=0;i<Num_Vals;i++)
     {
         double res_i = std::get<2>(Array[i])*vect.Vec[std::get<1>(Array[i])];
-        #pragma omp atomic update
+        //#pragma omp atomic update
         result.Vec[std::get<0>(Array[i])] += res_i;
         //printf("i = %d\n",i);
     }
@@ -101,7 +101,7 @@ COO::COO(SparseToeplitz& ST)
 void COO::operator*=(double c) 
 {
     int i;
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for (i=0;i<Num_Vals;i++)
     {
         std::get<2>(Array[i])*=c;
@@ -116,7 +116,7 @@ COO::COO(COO& other,double c)
     Num_Vals=other.Num_Vals;
     Array = new tuple[Num_Vals];
     int i;
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(Array[i])=std::get<0>(other.Array[i]);
@@ -151,7 +151,7 @@ Matrix* COO::Kronecker(Matrix& B)
     BlockCOO* result = new BlockCOO(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     
     int i;
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(result->Array[i])=std::get<0>(Array[i]);
@@ -170,7 +170,7 @@ Matrix* COO::negativeTranspose()
     int Rows[Num_Cols+1]; //Array to count entries per row in transposed matrix
     for(int j=0;j<Num_Cols+1;j++)
         Rows[j] = 0;
-#pragma omp parallel for
+//#pragma omp parallel for
     for(int c=0;c<Num_Cols;c++) //Go through columns of original matrix
     {
         for(int i=0;i<Num_Vals;i++) //Go through values
@@ -189,7 +189,7 @@ Matrix* COO::negativeTranspose()
     }
 
     int n;
-    #pragma omp parallel for private(n)
+    //#pragma omp parallel for private(n)
     for(int c=0;c<Num_Cols;c++) //Cols of original matrix, so rows of transposed matrix
     {
         n=Rows[c];
@@ -225,8 +225,72 @@ void COO::printFullMatrix()
     for (int i = 0; i < Num_Rows; i++) {
         for (int j = 0; j < Num_Cols; j++)
         {
-            std::cout << std::setw(4) << this->operator()(i,j);
+            std::cout << std::setw(6) << this->operator()(i,j);
         }
         std::cout << "\n";
     }
+}
+
+COO::COO(BlockToeplitz& BT)
+{ //This conversion algorithm is very inefficient, but works fine for now
+    Num_Vals = 0;
+    Num_Rows = BT.rows();
+    Num_Cols = BT.cols();
+
+    for (int i = 0; i < Num_Rows; i++) {
+        for (int j = 0; j < Num_Cols; j++)
+        {
+            if(BT.operator()(i,j) != 0.0)
+            {
+                Num_Vals++;
+            }
+        }
+    }
+
+    Array = new tuple[Num_Vals]; 
+    int n = 0;
+    for (int i = 0; i < Num_Rows; i++) {
+        for (int j = 0; j < Num_Cols; j++)
+        {
+            if(BT.operator()(i,j) != 0.0)
+            {
+                Array[n] = std::tuple(i,j,BT.operator()(i,j));
+                n++;
+            }
+        }
+    }
+/*
+    //Determine number of non-zero values
+    for(int q = 0; q<BT.Num_Diags;q++)
+    {
+        int f = BT.Diags[q];
+        if(f==0)
+        {
+            Num_Vals += std::min(Num_Cols,Num_Rows);
+        }
+        else if(f>0)
+        {
+            Num_Vals += Num_Cols-f;
+        }
+        else 
+        {
+            Num_Vals += Num_Rows+f;
+        }
+    }
+
+    Array = new tuple[Num_Vals];
+    int c = 0;
+
+    //Fill Array with correct tuples
+    for(int i=0;i<Num_Rows;i++)
+    {
+        for(int j = 0;j<BT.Num_Diags;j++)
+        {
+            if(Num_Cols > BT.Diags[j]+i && BT.Diags[j]+i >= 0)
+            {
+                Array[c] = std::make_tuple(i,BT.Diags[j]+i,BT.Vals[j]);
+                c++;
+            }
+        }
+    }*/
 }

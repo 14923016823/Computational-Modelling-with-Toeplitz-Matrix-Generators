@@ -7,11 +7,14 @@ Laplacian2D_ToeplitzMatrix::Laplacian2D_ToeplitzMatrix(const int rows, const int
     generateMatrix(rows, cols);
 }
     
+Laplacian2D_ToeplitzMatrix::~Laplacian2D_ToeplitzMatrix()
+{
 
+}
 
 double Laplacian2D_ToeplitzMatrix::k_func(double x, double y) {
     // Example variable k function; modify as needed
-    return 1.0 + 0.5 * (x + y);
+    return 1.0;
 }
 
 void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols) 
@@ -62,16 +65,17 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
     int ndiags = 2; //number of diagonals in incidence matrix
     BlockToeplitz IncidenceMatrix(rows * cols * 2, rows * cols, ndiags); // incidence matrix with 2 block rows
     IncidenceMatrix.Diags[0] = 0; // diagonal for upper incidence matrix
-    IncidenceMatrix.Diags[1] = 1; // diagonal for lower incidence matrix
+    IncidenceMatrix.Diags[1] = -1; // diagonal for lower incidence matrix
     IncidenceMatrix.Vals[0] = rowBlockPtr;
     IncidenceMatrix.Vals[1] = lowerIncidencePtr;
     //Incidence=&IncidenceMatrix;
     
     //     b.) Compute negative transpose
-    Incidence=new BlockToeplitz(IncidenceMatrix);
-    Matrix* negTransPtr = IncidenceMatrix.negativeTranspose();
+    Incidence=IncidenceMatrix.Clone(1); //The Clone seems necessary to make the Laplacian usable multiple times
+    Matrix* negTransPtr = Incidence->negativeTranspose();
     //BlockToeplitz negTrans=*negTrans;
     Incidence_T=negTransPtr; //Maybe a  memory leak, but it works for now
+    //Incidence = Incidence_T->negativeTranspose(); 
     //BlockToeplitz* negTransBlockPtr = static_cast<BlockToeplitz*>(negTransPtr); //cast to BlockToeplitz pointer for further operations
 
     //     c.) W_ee matrix generation function
@@ -79,28 +83,227 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
 
     DiagonalMatrix W_ee_matrix(dim);
 
-double dx = 1.0 / cols;
-double dy = 1.0 / rows;
+    double dx = 1.0 / cols;
+    double dy = 1.0 / rows;
 
-for (int i = 0; i < dim; ++i) 
-{
-    int col = i % cols;
-    int row = i / cols;  
-    double x = col * dx;
-    double y = row * dy;
-    double k_val = k_func(x, y);
-    W_ee_matrix.Diag_Vals[i] = k_val/(dx*dy);  // use dx (or dy) for spacing
-}
+    for (int i = 0; i < dim; ++i) 
+    {
+        int col = i % cols;
+        int row = i / cols;  
+        double x = col * dx;
+        double y = row * dy;
+        double k_val = k_func(x, y);
+        W_ee_matrix.Diag_Vals[i] = k_val/(dx*dy);  // use dx (or dy) for spacing
+    }
 
     Diagonal=W_ee_matrix.Clone(1.0);
+    //Incidence->printFullMatrix();
+    //Incidence_T->printFullMatrix();
 }
 
 Vectord Laplacian2D_ToeplitzMatrix::operator*(Vectord& input)
 {
-    Vectord b2 = (*Incidence) * input;
+    //std::cout << "a\n";
+    //Incidence->printFullMatrix();
+    //Incidence_T->printFullMatrix();
+    //input.print();
+    Vectord b2 = Incidence->operator*(input);
+    //b2.print();
+    //std::cout << "b\n";
     Vectord Wb = (*Diagonal) * b2;
+    //Wb.print();
+    //std::cout << "c\n";
     Vectord final_b = (*Incidence_T) * Wb;
+    //final_b.print();
     return final_b;
+}
+
+//Function that makes the COO Laplacian matrix
+COO Laplacian2D_ToeplitzMatrix::COO_Laplacian()
+{
+    //COO Incidence_COO(*static_cast<BlockToeplitz*>(Incidence));
+    COO Incidence_T_COO(*static_cast<BlockToeplitz*>(Incidence_T));
+    DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
+    for(int i = 0; i<Incidence_T_COO.Num_Vals;i++)
+    {
+        std::get<2>(Incidence_T_COO.Array[i])*=Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]/2.0;
+    }
+
+    int N = 0;
+    int val_tot = 0;
+    int n_c;
+
+    for(int c=0;c<Incidence_T_COO.rows();c++)
+    {
+        n_c = 0;
+        for(int i = val_tot;i<Incidence_T_COO.Num_Vals;i++)
+        {
+            if(std::get<0>(Incidence_T_COO.Array[i])==c)
+            {
+                n_c++;
+                val_tot++;
+            }
+            if(std::get<0>(Incidence_T_COO.Array[i])>c)
+            {
+                break;
+            }
+        }
+        N += (2*n_c-3);
+    }
+
+    COO result(Incidence_T_COO.rows(), Incidence_T_COO.rows(), N);
+
+    int n = 0;
+    double sum;
+    bool changed;
+    for(int r = 0; r<Incidence_T_COO.rows(); r++)
+    {
+        //printf("r=%d\n",r);
+        for(int c = 0; c<Incidence_T_COO.rows(); c++)
+        {
+            //printf("c=%d\n",c);
+            //Create values on and above main diagonal
+            if(r<=c) 
+            {
+                changed=false;
+                sum = 0.0;
+                for(int i = 0; i<Incidence_T_COO.Num_Vals; i++) 
+                //i was suupposed to start from k to avoid unnecessary steps, but something went wrong
+                {
+                    if(r == std::get<0>(Incidence_T_COO.Array[i]))
+                    {
+                        for(int j = i; j<Incidence_T_COO.Num_Vals; j++)
+                        {
+                            if(c == std::get<0>(Incidence_T_COO.Array[j]) 
+                                && std::get<1>(Incidence_T_COO.Array[i])==std::get<1>(Incidence_T_COO.Array[j]))
+                            {
+                                sum += std::get<2>(Incidence_T_COO.Array[j])*std::get<2>(Incidence_T_COO.Array[i]);
+                                changed= true;
+                                break;
+                            }
+                            if(c<std::get<0>(Incidence_T_COO.Array[j]))
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    if(r<std::get<0>(Incidence_T_COO.Array[i]))
+                    {
+                        if(changed==true)
+                        {
+                            std::get<2>(result.Array[n]) = -sum;
+                            std::get<0>(result.Array[n]) = r;
+                            std::get<1>(result.Array[n]) = c;
+                            n++;
+                        }
+                        break;
+                    }
+                }
+            }
+            //Check for pre-existing values due to symmetry, insert values below main diagonal
+            else
+            {
+                for(int i = 0; i<n; i++) 
+                {   
+                    if(r == std::get<1>(result.Array[i]) && c == std::get<0>(result.Array[i]))
+                    {
+                        std::get<1>(result.Array[n]) = std::get<0>(result.Array[i]);
+                        std::get<0>(result.Array[n]) = std::get<1>(result.Array[i]);
+                        std::get<2>(result.Array[n]) = std::get<2>(result.Array[i]);
+                        n++;
+                    }
+                }
+            }
+        }
+    }
+    //Set last value
+    if(changed==true)
+        {
+            std::get<2>(result.Array[n]) = -sum;
+            std::get<0>(result.Array[n]) = Incidence_T_COO.rows()-1;
+            std::get<1>(result.Array[n]) = Incidence_T_COO.rows()-1;
+            n++;
+        }
+    return result;
+}
+
+CSR Laplacian2D_ToeplitzMatrix::CSR_Laplacian()
+{
+    //CSR Incidence_CSR(*static_cast<BlockToeplitz*>(Incidence));
+    CSR Incidence_T_CSR(*static_cast<BlockToeplitz*>(Incidence_T));
+    DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
+    for(int i = 0; i<Incidence_T_CSR.rows();i++)
+    {
+        for(int j = Incidence_T_CSR.Rows[i]; j<Incidence_T_CSR.Rows[i+1];j++)   
+        { 
+            Incidence_T_CSR.Vals[j]*=Diag->Diag_Vals[i]/2.0;
+        }
+    }
+
+    int N = 0;
+
+    for(int c=0;c<Incidence_T_CSR.rows();c++)
+    {
+        N += (2*(Incidence_T_CSR.Rows[c+1]-Incidence_T_CSR.Rows[c])-3);
+    }
+
+    CSR result(Incidence_T_CSR.rows(), Incidence_T_CSR.rows(), N);
+
+    double sum;
+    bool changed;
+    for(int r = 0; r<Incidence_T_CSR.rows(); r++)
+    {
+        //printf("r = %d\n", r);
+        result.Rows[r+1] = result.Rows[r];
+        for(int c = 0; c<Incidence_T_CSR.rows(); c++)
+        {
+            //Create values on and above main diagonal
+            //printf("c = %d\n", c);
+            if(r<=c) 
+            {
+                sum = 0.0;
+                changed = false;
+                for(int i = Incidence_T_CSR.Rows[r]; i<Incidence_T_CSR.Rows[r+1]; i++)
+                {
+                    for(int j = Incidence_T_CSR.Rows[c]; j<Incidence_T_CSR.Rows[c+1]; j++)
+                    {
+                        if(Incidence_T_CSR.Cols[i]==Incidence_T_CSR.Cols[j])
+                        {
+                            sum += Incidence_T_CSR.Vals[j]*Incidence_T_CSR.Vals[i];
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+                if(changed==true)
+                {
+                    result.Vals[result.Rows[r+1]] = -sum;
+                    result.Cols[result.Rows[r+1]] = c;
+                    result.Rows[r+1]++;
+                    //break;
+                }
+            }
+            //Check for pre-existing values due to symmetry, insert values below main diagonal
+            else
+            {
+                for(int i = 0; i<r; i++) 
+                {   
+                    for(int j = result.Rows[c]; j<result.Rows[c+1];j++)
+                    {
+                        if(r == result.Cols[j] && c == i)
+                        {
+                            result.Vals[result.Rows[r+1]] = result.Vals[j];
+                            result.Cols[result.Rows[r+1]] = i;
+                            result.Rows[r+1]++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    return result;
 }
 
 void Laplacian2D_ToeplitzMatrix::operator*=(double c){throw std::invalid_argument("Not implemented");}
