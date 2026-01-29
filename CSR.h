@@ -17,6 +17,8 @@ public:
     int Num_Vals;
 
     //constructor
+    void MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start) override;
+    void MatMul(const Vectord& x,Vectord& result) override;
     
     CSR(double* vals, int* cols, int* rows, int num_vals, int num_rows, int num_cols);
 

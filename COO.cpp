@@ -16,6 +16,33 @@ COO::COO(int num_rows, int num_cols, const std::initializer_list<tuple>& list)
     std::uninitialized_copy(list.begin(), list.end(), Array);
 }
 
+
+
+void COO::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
+{
+    for(int i=0;i<Num_Vals;i++)
+    {
+        double res_i = std::get<2>(Array[i])*x[std::get<1>(Array[i])+x_start];
+        //#pragma omp atomic update
+        result[std::get<0>(Array[i])+result_start] += res_i;
+    }
+
+};
+void COO::MatMul(const Vectord& x,Vectord& result)
+{
+    if(x.len()!=Num_Cols||result.len()!=Num_Rows)
+    {
+        throw std::invalid_argument("Vector and Matrix size dont match COO");
+    }
+    for(int i=0;i<result.len();i++)
+    {
+        result[i]=0.0;
+    }
+    MatMulAdd(x,0,result,0);
+}
+
+
+
 Vectord COO::operator*(Vectord& vect)
 {
     int len = vect.len();

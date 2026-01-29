@@ -33,6 +33,9 @@ public:
 
     ~COO();
 
+    void MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start) override;
+    void MatMul(const Vectord& x,Vectord& result) override;
+
     void operator*=(double c) override;
 
     Matrix* Kronecker(Matrix& B) override;

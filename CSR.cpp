@@ -26,6 +26,32 @@ CSR::CSR(int num_rows, int num_cols, int num_vals)
         Cols[q] = 0;
 }
 
+void CSR::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
+{
+    for(int i=0;i<Num_Rows;i++)
+    {
+
+        double res_i = 0;
+        for(int j=Rows[i];j<Rows[i+1];j++)
+        {
+            res_i += x[Cols[j]+x_start]*Vals[j];
+        }
+        result[i+result_start] += res_i;
+    }
+};
+void CSR::MatMul(const Vectord& x,Vectord& result)
+{
+    if(x.len()!=Num_Cols||result.len()!=Num_Rows)
+    {
+        throw std::invalid_argument("Vector and Matrix size dont match CSR matmul");
+    }
+    for(int i=0;i<result.len();i++)
+    {
+        result[i]=0.0;
+    }
+    MatMulAdd(x,0,result,0);
+};
+
 Vectord CSR::operator*(Vectord& vect)
 {   
     int len = vect.Length;
