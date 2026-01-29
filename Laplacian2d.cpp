@@ -135,7 +135,7 @@ COO Laplacian2D_ToeplitzMatrix::COO_Laplacian()
     DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
     for(int i = 0; i<Incidence_T_COO.Num_Vals;i++)
     {
-        std::get<2>(Incidence_T_COO.Array[i])*=Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]/2.0;
+        std::get<2>(Incidence_T_COO.Array[i])*=sqrt(Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]);
     }
 
     int N = 0;
@@ -245,7 +245,7 @@ CSR Laplacian2D_ToeplitzMatrix::CSR_Laplacian()
     {
         for(int j = Incidence_T_CSR.Rows[i]; j<Incidence_T_CSR.Rows[i+1];j++)   
         { 
-            Incidence_T_CSR.Vals[j]*=Diag->Diag_Vals[i]/2.0;
+            Incidence_T_CSR.Vals[j]*=sqrt(Diag->Diag_Vals[i]);
         }
     }
 
