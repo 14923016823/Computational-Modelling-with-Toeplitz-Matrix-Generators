@@ -104,17 +104,17 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
 Vectord Laplacian2D_ToeplitzMatrix::operator*(Vectord& input)
 {
     //std::cout << "a\n";
-    Incidence->printFullMatrix();
+    //Incidence->printFullMatrix();
     //Incidence_T->printFullMatrix();
-    input.print();
+    //input.print();
     Vectord b2 = Incidence->operator*(input);
-    b2.print();
+    //b2.print();
     //std::cout << "b\n";
     Vectord Wb = (*Diagonal) * b2;
-    Wb.print();
+    //Wb.print();
     //std::cout << "c\n";
     Vectord final_b = (*Incidence_T) * Wb;
-    final_b.print();
+    //final_b.print();
     return final_b;
 }
 
