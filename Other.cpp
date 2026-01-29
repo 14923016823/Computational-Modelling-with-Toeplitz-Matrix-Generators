@@ -13,18 +13,26 @@ int main()
     tuple t2 = std::make_tuple(0,3,4);
     tuple t3 = std::make_tuple(4,2,6);
     COO B(num_rows,num_cols,{t1,t2,t3});
+
+/*
     //B.print();
 
-    std::srand(10);
-    std::experimental::reseed(10);
+    //std::srand(10);
+    //std::experimental::reseed(10);
     int r_rows = 4000;
     int r_cols = 4000;
     int r_prob = 5;
 
     SparseToeplitz D = r_ST(r_rows,r_cols,r_prob);
+    CSR D_CSR(D);
+    COO D_COO(D);
     //D.printFullMatrix();
-    D.print();
+    //D.print();
     Vectord x2 = r_Vec(r_cols);
+    for(int i=0;i<r_cols;i++)
+    {
+        x2.Vec[i]=(i*3+8)/0.29836298;
+    }
     //x2.print();
 
     auto start = std::chrono::steady_clock::now();
@@ -33,43 +41,53 @@ int main()
     std::chrono::duration<double> diff = end - start;
     std::cout << "t = " << diff.count() << '\n';
     r.Vec[0] = r.Vec[0];
+
+    Vectord r_CSR = D_CSR*x2;
+    Vectord r_COO = D_COO*x2;
+
+    Vectord r_diff(r_cols);
+    for(int i=0;i<r_cols;i++)
+    {
+        r_diff.Vec[i] = r.Vec[i]-r_CSR.Vec[i];
+    }
+    r_diff.print();
     //r.print();
 
     CSR A(vals, cols, rows, length, num_rows, num_cols);
     Vectord x(num_cols);
     A.print();
 
-    B.printFullMatrix();
-    Matrix* Bt = B.negativeTranspose();
+    A.printFullMatrix();
+    Matrix* Bt = A.negativeTranspose();
     Bt->print();
     Bt->printFullMatrix();
     
     for(int i=0;i<num_cols;i++)
     {
-        x.Vec[i]=i;
+        x.Vec[i]=(i*3+8);
     }
     x.print();
         
     A.print();
-    start = std::chrono::steady_clock::now();
+    //start = std::chrono::steady_clock::now();
     Vectord y = A*x;
-    end = std::chrono::steady_clock::now();
-    diff = end - start;
-    std::cout << "t = " << diff.count() << '\n';
+    //end = std::chrono::steady_clock::now();
+    //diff = end - start;
+   // std::cout << "t = " << diff.count() << '\n';
     y.print();
 
-    start = std::chrono::steady_clock::now();
+    //start = std::chrono::steady_clock::now();
     Vectord z = B*x;
-    end = std::chrono::steady_clock::now();
-    diff = end - start;
-    std::cout << "t = " << diff.count() << '\n';
+    //end = std::chrono::steady_clock::now();
+    //diff = end - start;
+    //std::cout << "t = " << diff.count() << '\n';
     z.print();
-
+*/
     int STlength = 3;
     int STdiags[STlength] = {-1,0,1};
     double STvals[STlength] = {-1,2,-1};
-    int STwidth = 400;
-    int STheight = 400;
+    int STwidth = 4;
+    int STheight = 4;
     Vectord x(STwidth);
     for(int i=0;i<STwidth;i++)
     {
@@ -88,17 +106,17 @@ int main()
     //std::cout << "t = " << diff.count() << '\n';
     //a.print();
     
-    //int Onediag[1] = {0};
-    //double Oneval[1] = {1};
-    //SparseToeplitz One(3,2,1,Onediag,Oneval);
+    int Onediag[1] = {0};
+    double Oneval[1] = {1};
+    SparseToeplitz One(3,2,1,Onediag,Oneval);
     //One.print();
     //std::cout << "One: \n";
     //One.printFullMatrix();
 
-    CSR C_CSR(C);
+    //CSR C_CSR(C);
     //C_CSR.print();
 
-    COO C_COO(C);
+    //COO C_COO(C);
     //C_COO.print();
 
     //COO One_COO(One);
@@ -108,13 +126,13 @@ int main()
     //One_CSR.print();
 
     //start = std::chrono::steady_clock::now();
-    Vectord a_csr = C_CSR*x;
+    //Vectord a_csr = C_CSR*x;
     //end = std::chrono::steady_clock::now();
     //diff = end - start;
     //std::cout << "t = " << diff.count() << '\n';
 
     //start = std::chrono::steady_clock::now();
-    Vectord a_coo = C_COO*x;
+    //Vectord a_coo = C_COO*x;
     //end = std::chrono::steady_clock::now();
     //diff = end - start;
     //std::cout << "t = " << diff.count() << '\n';
@@ -122,7 +140,12 @@ int main()
     Matrix* Two = C.Kronecker(One);
     std::cout << "Two: \n";
     Two->printFullMatrix();
-
+    Two->operator*=(5);
+    Two->printFullMatrix();
+    BlockToeplitz* Dos = static_cast<BlockToeplitz*>(Two);
+    CSR Two_COO(*Dos);
+    Two_COO.printFullMatrix();
+/*
     Vectord in(Two->cols());
     for(int i=0;i<Two->cols();i++)
     {
@@ -187,26 +210,41 @@ int main()
     out_COO.print();
     out_BT.print();
    */
-    int rows = 300;
-    int cols = 400;
+  
+    int rows = 3;
+    int cols = 3;
     int arrays = 1;
 
     Vectord vec(cols*rows*arrays);
     for (int i = 0; i < rows * cols * arrays; ++i) {
-        vec.Vec[i] = 1.0; // Example initialization
+        vec.Vec[i] = i; // Example initialization
     }
     
+
     //Laplacian2D_FullMatrix laplacian(rows, cols);
+
     Laplacian2D_ToeplitzMatrix L2d=Laplacian2D_ToeplitzMatrix(rows,cols);
+    COO L2d_COO = L2d.COO_Laplacian();
+    //L2d_COO.print();
+    CSR L2d_CSR = L2d.CSR_Laplacian();
+    //L2d_CSR.printFullMatrix();
     try
     {
-        Vectord a = L2d*vec;
-        a=a;
+        Vectord a(rows*cols);
+        L2d.Laplacian2d(vec,a);
+        a.print();
+
+        L2d_COO.printFullMatrix();
+        L2d_CSR.printFullMatrix();
+
+        Vectord b = L2d_CSR*vec;
+        b.print();
     }
     catch(const char* msg)
     {
         std::cout << msg <<std::endl;
     }
+
     /*
     std::cout << "L\n";
     Laplacian3D_ToeplitzMatrix L3d=Laplacian3D_ToeplitzMatrix(rows,cols,arrays);
@@ -221,6 +259,10 @@ int main()
         std::cout << msg <<std::endl;
     }
     std::cout << "yes\n";
-*/
+*//*
+    int rows = 4;
+    int cols = 3;
+    Laplacian2D_ToeplitzMatrix L2d=Laplacian2D_ToeplitzMatrix(rows,cols);
+    COO L2d_COO = L2d.COO_Laplacian();*/
     return 0;
 }
