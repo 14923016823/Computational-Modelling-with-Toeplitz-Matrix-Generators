@@ -39,28 +39,51 @@ SparseToeplitz::SparseToeplitz(SparseToeplitz& other, double c)
     }
 }
 
-Vectord SparseToeplitz::operator*(Vectord& vec)
+
+
+void SparseToeplitz::MatMulAdd(const Vectord& x, const int x_start,Vectord& result,const int result_start)
 {
-    int len = vec.Length;
-    if (len != Num_Cols) 
+    for (int j = 0; j < Num_Diags; ++j) 
     {
-        throw std::invalid_argument("Vector and Matrix size dont match");
+        int d = Diags[j];
+        double v = Vals[j];
+        if(d>=0)
+        {
+            int diag_length=std::min(Num_Rows, Num_Cols-d);
+            for(int i=0;i<diag_length;i++)
+            {
+                result[i+result_start]+=v*x[i+d+x_start];
+            }
+        }
+        else
+        {
+            int diag_length=std::min(Num_Cols, Num_Rows+d);
+            for(int i=0;i<diag_length;i++)
+            {
+                result[i-d+result_start]+=v*x[i+x_start];
+            }
+        }
     }
+}
+
+void SparseToeplitz::MatMul(const Vectord& x,Vectord& result)
+{
+    if(x.len()!=Num_Cols||result.len()!=Num_Rows)
+    {
+        throw std::invalid_argument("Vector and Matrix size dont match matmul");
+    }
+    for(int i=0;i<result.len();i++)
+    {
+        result[i]=0.0;
+    }
+    MatMulAdd(x,0,result,0);
+}
+
+Vectord SparseToeplitz::operator*(Vectord& vec)//try not to use this function
+{
     Vectord result = Vectord(Num_Rows);
-
-    for (int j = 0; j < Num_Diags; ++j) {
-    int d = Diags[j];
-    double v = Vals[j];
-
-    int i0 = std::max(0, -d);
-    int i1 = std::min(Num_Rows, Num_Cols - d);
-
-    for (int i = i0; i < i1; ++i) {
-        result.Vec[i] += v * vec.Vec[i + d];
-    }
-     
-    }
-   return result;
+    MatMul(vec,result);
+    return result;
 }
 
 void SparseToeplitz::print()

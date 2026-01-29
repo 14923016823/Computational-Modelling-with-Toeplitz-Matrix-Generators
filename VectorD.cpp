@@ -10,6 +10,24 @@ Vectord::Vectord(int length)
     }
 }
 
+double& Vectord::operator[](const int i)
+{
+    if(i<0 || i>=Length)
+    {
+        throw std::invalid_argument("trying to acces outside of vector");
+    }
+    return Vec[i];
+}
+
+double Vectord::operator[](const int i) const {
+    if(i<0 || i>=Length)
+    {
+        throw std::invalid_argument("trying to acces outside of vector");
+    }
+    return Vec[i]; // returns by value, read-only context
+}
+
+
 Vectord::Vectord(const std::initializer_list<double>& list)
 : Vectord((int)list.size())
 {

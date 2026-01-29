@@ -32,5 +32,10 @@ public:
 
     Vectord& scal(double c);
 
+    double& operator[](const int i);
+    double operator[](const int i) const;
+
+
+
     void axpy(const double c,const Vectord& VecIn);
 };

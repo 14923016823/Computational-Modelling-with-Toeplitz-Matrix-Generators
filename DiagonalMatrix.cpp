@@ -41,17 +41,33 @@ void DiagonalMatrix::operator*=(double c)
     }
 }
 
-// matrix-vector multiplication (fast)
-Vectord DiagonalMatrix::operator*(Vectord& vec) 
+void DiagonalMatrix::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
 {
-    if (vec.len() != Num_Cols)
-        throw std::runtime_error("Vector size mismatch");
 
-    Vectord result=Vectord(vec.len());
-#pragma omp parallel for
-    for (int i = 0; i < Num_Cols; i++) {
-        result.Vec[i] = Diag_Vals[i] * vec.Vec[i];
+    for (int i = 0; i < Num_Cols; i++) 
+    {
+        result[result_start+i] += Diag_Vals[x_start+i] * x[i];
     }
+}
+void DiagonalMatrix::MatMul(const Vectord& x,Vectord& result)
+{
+    if (x.len() != Num_Cols || result.len() !=Num_Rows)
+    {
+        throw std::runtime_error("Vector size mismatch diagonal");
+    }
+        
+    for(int i=0;i<result.len();i++)
+    {
+        result[i]=0.0;
+    }
+    MatMulAdd(x,0,result,0);
+}
+
+
+Vectord DiagonalMatrix::operator*(Vectord& vec) // try not to use this function
+{
+    Vectord result=Vectord(Num_Cols);
+    MatMul(vec,result);
     return result;
 }
 

@@ -22,6 +22,8 @@ public:
    
 
     void operator*=(double c) override;
+    void MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start) override;
+    void MatMul(const Vectord& x,Vectord& result) override;
     
 
     Matrix* Kronecker(Matrix& B) override;

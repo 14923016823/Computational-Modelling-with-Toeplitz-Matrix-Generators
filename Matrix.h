@@ -29,6 +29,9 @@ public:
     virtual void printFullMatrix();
 
     virtual double operator()(int i, int j) const { return 0.0; }
+
+    virtual void MatMulAdd(const Vectord& x, const int x_start,Vectord& result,const int result_start) =0; //result+=Ax
+    virtual void MatMul(const Vectord& x,Vectord& result) =0;//result=Ax
 };
 
 typedef  Matrix* MatrixPointer;
