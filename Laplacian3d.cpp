@@ -5,11 +5,15 @@ Laplacian3D_ToeplitzMatrix::Laplacian3D_ToeplitzMatrix(const int rows, const int
     generateMatrix(rows, cols, arrays);
 }
     
+Laplacian3D_ToeplitzMatrix::~Laplacian3D_ToeplitzMatrix()
+{
+
+}
 
 
 double Laplacian3D_ToeplitzMatrix::k_func(double x, double y, double z) {
     // Example variable k function; modify as needed
-    return 1.0 + 0.5 * (x + y + z);
+    return 1.0;
 }
 
 void Laplacian3D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, const int arrays) 
@@ -75,8 +79,9 @@ void Laplacian3D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, 
     identityMatrix_2D.Vals[0] = 1;
 
     //     c.) Column block matrix kronecker product with identity matrix (arrays)
-    Matrix* lowerIncidenceMatrix_3D = arrayBlockMatrix.Kronecker(identityMatrix_2D); // lower incidence matrix
+    lowerIncidenceMatrix_3D = (arrayBlockMatrix.Kronecker(identityMatrix_2D))->Clone(1.0); // lower incidence matrix
     BlockToeplitz* lowerIncidencePtr_3D = static_cast<BlockToeplitz*>(lowerIncidenceMatrix_3D);  //cast to BlockToeplitz pointer for further operations
+    lowerIncidenceMatrix_3D = lowerIncidencePtr_3D->Clone(1.0);
 
     // 4.) Final Laplacian matrix assembly
     //     a.) Concatenate upper and lower incidence matrices
@@ -88,21 +93,29 @@ void Laplacian3D_ToeplitzMatrix::generateMatrix(const int rows, const int cols, 
     IncidenceMatrix_2D.Vals[1] = lowerIncidencePtr;
     //Incidence=&IncidenceMatrix;
 
-    IncidenceMatrix_2D.printFullMatrix();
-    Matrix* upperIncidenceMatrix_3D(identityMatrixArrays.Kronecker(IncidenceMatrix_2D)); // upper incidence matrix
-    upperIncidenceMatrix_3D->printFullMatrix();
+    //IncidenceMatrix_2D.printFullMatrix();
+    upperIncidenceMatrix_3D = (identityMatrixArrays.Kronecker(IncidenceMatrix_2D))->Clone(1.0); // upper incidence matrix
     BlockToeplitz* BlockPtr_2D = static_cast<BlockToeplitz*>(upperIncidenceMatrix_3D);  //cast to BlockToeplitz pointer for further operations
-    BlockPtr_2D->printFullMatrix();
+    //BlockPtr_2D->printFullMatrix();
+    upperIncidenceMatrix_3D = BlockPtr_2D->Clone(1.0);
     
     BlockToeplitz IncidenceMatrix_3D(rows * cols * arrays * 3, rows * cols * arrays, ndiags); // incidence matrix with 2 block rows
     IncidenceMatrix_3D.Diags[0] = 0; // diagonal for upper incidence matrix
     IncidenceMatrix_3D.Diags[1] = -1; // diagonal for lower incidence matrix
     IncidenceMatrix_3D.Vals[0] = BlockPtr_2D;
     IncidenceMatrix_3D.Vals[1] = lowerIncidencePtr_3D;
+
+    leftIncidenceT_Matrix_3D = (upperIncidenceMatrix_3D->negativeTranspose())->Clone(1.0);
+    BlockToeplitz* left_T_3D = static_cast<BlockToeplitz*>(leftIncidenceT_Matrix_3D);
+    leftIncidenceT_Matrix_3D = left_T_3D->Clone(1.0);
+
+    rightIncidenceT_Matrix_3D = (lowerIncidenceMatrix_3D->negativeTranspose())->Clone(1.0);
+    BlockToeplitz* right_T_3D = static_cast<BlockToeplitz*>(rightIncidenceT_Matrix_3D);
+    rightIncidenceT_Matrix_3D = right_T_3D->Clone(1.0);
     
     //     b.) Compute negative transpose
-    Incidence=new BlockToeplitz(IncidenceMatrix_3D);
-    Incidence->printFullMatrix(); //This print also returns an error because of inconsistent block sizes
+    Incidence=IncidenceMatrix_3D.Clone(1.0);
+    //Incidence->printFullMatrix(); //This print also returns an error because of inconsistent block sizes
     Matrix* negTransPtr = IncidenceMatrix_3D.negativeTranspose();
     //BlockToeplitz negTrans=*negTrans;
     Incidence_T=negTransPtr;
@@ -126,28 +139,37 @@ for (int i = 0; i < dim; ++i)
     double y = row * dy;
     double z = arr * dz;
     double k_val = k_func(x, y, z);
-    W_ee_matrix.Diag_Vals[i] = k_val/(dx*dy*dz);  // use dx (or dy) for spacing
+    W_ee_matrix.Diag_Vals[i] = k_val/(pow(dx,2))+k_val/(pow(dy,2))+k_val/(pow(dz,2));  // use dx (or dy) for spacing
 }
 
     Diagonal=W_ee_matrix.Clone(1.0);
+    Tmp1= Vectord(Incidence->rows());
+    Tmp2=Vectord(Incidence->rows());
 }
 
-Vectord Laplacian3D_ToeplitzMatrix::operator*(Vectord& input)
+void Laplacian3D_ToeplitzMatrix::Laplacian3d(const Vectord& input,Vectord& result)
 {
-    Vectord b2 = (*Incidence) * input;
-    Vectord Wb = (*Diagonal) * b2;
-    Vectord final_b = (*Incidence_T) * Wb;
-    return final_b;
+    upperIncidenceMatrix_3D->MatMulAdd(input,0,Tmp1,0);
+    lowerIncidenceMatrix_3D->MatMulAdd(input,0,Tmp1,upperIncidenceMatrix_3D->rows());
+    Diagonal->MatMul(Tmp1,Tmp2);
+    leftIncidenceT_Matrix_3D->MatMulAdd(Tmp2,0,result,0);
+    rightIncidenceT_Matrix_3D->MatMulAdd(Tmp2,leftIncidenceT_Matrix_3D->cols(),result,0);
 }
 
 COO Laplacian3D_ToeplitzMatrix::COO_Laplacian()
 {
     //COO Incidence_COO(*static_cast<BlockToeplitz*>(Incidence));
-    COO Incidence_T_COO(*static_cast<BlockToeplitz*>(Incidence_T));
+    COO Incidence_COO(*static_cast<BlockToeplitz*>(Incidence));
+    COO Incidence_T_COO(*static_cast<COO*>(Incidence_COO.negativeTranspose()));
+    Incidence_T_COO.printFullMatrix();
+    std::cout << "left:\n";
+    leftIncidenceT_Matrix_3D->printFullMatrix();
+    std::cout << "right:\n";
+    rightIncidenceT_Matrix_3D->printFullMatrix();
     DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
     for(int i = 0; i<Incidence_T_COO.Num_Vals;i++)
     {
-        std::get<2>(Incidence_T_COO.Array[i])*=Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]/2.0;
+        std::get<2>(Incidence_T_COO.Array[i])*=sqrt(Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]);
     }
 
     int N = 0;
@@ -171,6 +193,8 @@ COO Laplacian3D_ToeplitzMatrix::COO_Laplacian()
         }
         N += (2*n_c-3);
     }
+
+    N=7*Incidence_T_COO.rows();
 
     COO result(Incidence_T_COO.rows(), Incidence_T_COO.rows(), N);
 
@@ -251,13 +275,14 @@ COO Laplacian3D_ToeplitzMatrix::COO_Laplacian()
 CSR Laplacian3D_ToeplitzMatrix::CSR_Laplacian()
 {
     //CSR Incidence_CSR(*static_cast<BlockToeplitz*>(Incidence));
-    CSR Incidence_T_CSR(*static_cast<BlockToeplitz*>(Incidence_T));
+    CSR Incidence_CSR(*static_cast<BlockToeplitz*>(Incidence));
+    CSR Incidence_T_CSR(*static_cast<CSR*>(Incidence_CSR.negativeTranspose()));
     DiagonalMatrix* Diag(static_cast<DiagonalMatrix*>(Diagonal));
     for(int i = 0; i<Incidence_T_CSR.rows();i++)
     {
         for(int j = Incidence_T_CSR.Rows[i]; j<Incidence_T_CSR.Rows[i+1];j++)   
         { 
-            Incidence_T_CSR.Vals[j]*=Diag->Diag_Vals[i]/2.0;
+            Incidence_T_CSR.Vals[j]*=sqrt(Diag->Diag_Vals[i]);
         }
     }
 
@@ -267,6 +292,8 @@ CSR Laplacian3D_ToeplitzMatrix::CSR_Laplacian()
     {
         N += (2*(Incidence_T_CSR.Rows[c+1]-Incidence_T_CSR.Rows[c])-3);
     }
+
+    N = 7*Incidence_T_CSR.rows();
 
     CSR result(Incidence_T_CSR.rows(), Incidence_T_CSR.rows(), N);
 
@@ -290,6 +317,10 @@ CSR Laplacian3D_ToeplitzMatrix::CSR_Laplacian()
                     {
                         if(Incidence_T_CSR.Cols[i]==Incidence_T_CSR.Cols[j])
                         {
+                            if(r==9 && c==9)
+                            {
+                                printf("%d\n",Incidence_T_CSR.Cols[i]);
+                            }
                             sum += Incidence_T_CSR.Vals[j]*Incidence_T_CSR.Vals[i];
                             changed = true;
                             break;
@@ -326,15 +357,3 @@ CSR Laplacian3D_ToeplitzMatrix::CSR_Laplacian()
     
     return result;
 }
-
-void Laplacian3D_ToeplitzMatrix::operator*=(double c){throw std::invalid_argument("Not implemented");}
-   
-Matrix* Laplacian3D_ToeplitzMatrix::Kronecker(Matrix& B) {throw std::invalid_argument("Not implemented");}
-
-Matrix* Laplacian3D_ToeplitzMatrix::Clone(double c) {throw std::invalid_argument("Not implemented");}
-
-Matrix* Laplacian3D_ToeplitzMatrix::negativeTranspose() {throw std::invalid_argument("Not implemented");}
-    
-void Laplacian3D_ToeplitzMatrix::printFullMatrix() {throw std::invalid_argument("Not implemented");}
-    
-double Laplacian3D_ToeplitzMatrix::operator()(int i, int j) const {throw std::invalid_argument("Not implemented");}

@@ -300,7 +300,7 @@ void CSR::printFullMatrix()
     for (int i = 0; i < Num_Rows; ++i) {
         for (int j = 0; j < Num_Cols; ++j)
         {
-            std::cout << std::setw(6) << this->operator()(i,j);
+            std::cout << std::setw(4) << this->operator()(i,j);
         }
         std::cout << "\n";
     }
@@ -324,6 +324,9 @@ CSR::CSR(BlockToeplitz& BT)
         }
         Rows[i+1] = Num_Vals;
     }
+
+    printf("%d values\n",Num_Vals);
+    printf("%dx%d\n",Num_Rows,Num_Cols);
 
     Vals = new double[Num_Vals];
     Cols = new int[Num_Vals];

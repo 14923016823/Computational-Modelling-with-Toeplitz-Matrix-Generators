@@ -71,7 +71,7 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
     //Incidence=&IncidenceMatrix;
     
     //     b.) Compute negative transpose
-    Incidence=IncidenceMatrix.Clone(1); //The Clone seems necessary to make the Laplacian usable multiple times
+    Incidence=IncidenceMatrix.Clone(1.0); //The Clone seems necessary to make the Laplacian usable multiple times
     Matrix* negTransPtr = Incidence->negativeTranspose();
     //BlockToeplitz negTrans=*negTrans;
     Incidence_T=negTransPtr; //Maybe a  memory leak, but it works for now
@@ -93,7 +93,7 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
         double x = col * dx;
         double y = row * dy;
         double k_val = k_func(x, y);
-        W_ee_matrix.Diag_Vals[i] = k_val/(dx*dy);  // use dx (or dy) for spacing
+        W_ee_matrix.Diag_Vals[i] = k_val/(pow(dx,2))+k_val/(pow(dy,2));  // use dx (or dy) for spacing
     }
 
     Diagonal=W_ee_matrix.Clone(1.0);
@@ -159,6 +159,8 @@ COO Laplacian2D_ToeplitzMatrix::COO_Laplacian()
         }
         N += (2*n_c-3);
     }
+
+    N=5*Incidence_T_COO.rows();
 
     COO result(Incidence_T_COO.rows(), Incidence_T_COO.rows(), N);
 
@@ -255,6 +257,8 @@ CSR Laplacian2D_ToeplitzMatrix::CSR_Laplacian()
     {
         N += (2*(Incidence_T_CSR.Rows[c+1]-Incidence_T_CSR.Rows[c])-3);
     }
+
+    N = 5*Incidence_T_CSR.rows();
 
     CSR result(Incidence_T_CSR.rows(), Incidence_T_CSR.rows(), N);
 

@@ -45,6 +45,7 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
 
 void BlockToeplitz::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
 {
+    fflush(stdout);
     int br = Vals[0]->rows();  // block row size
     int bc = Vals[0]->cols();  // block col size
 
@@ -74,6 +75,8 @@ void BlockToeplitz::MatMulAdd(const Vectord& x,const int x_start,Vectord& result
                 B->MatMulAdd(x,x_start+i*bc,result,result_start+(i-d)*br);
             }
         }
+        //std::cout << d << std::endl;
+        //std::cout << Vals[k]->rows() << " " << Vals[k]->cols() << "\n";
     }
 }
 
@@ -154,10 +157,10 @@ Vectord BlockToeplitz::operator*(Vectord& vec)
 void BlockToeplitz::operator*=(double c)
 {
     int i;
-    #pragma omp parallel for private(i)
+    //#pragma omp parallel for private(i)
     for(i=0;i<Num_Diags;i++)
     {
-        (*Vals[i])*=c;
+        Vals[i]->Clone(c);
     }
         
 }
@@ -168,7 +171,7 @@ Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bott
     //printf("num diags=%d\n",Num_Diags);
     //printf("vals[0],%d\n",Vals[0]);
     int i;
-#pragma omp parallel for private(i)
+//#pragma omp parallel for private(i)
     for(i=0;i<Num_Diags;i++)
     {
         result->Diags[i]=Diags[i];
@@ -214,7 +217,7 @@ double BlockToeplitz::operator()(int i, int j) const
     for (int k = 0; k < Num_Diags; k++) {
         if (Diags[k] == diag_index) {
             // Access the sub-matrix element
-            return (*Vals[k])(sub_i, sub_j);
+            return Vals[k]->operator()(sub_i, sub_j);
         }
     }
     return 0.0; // element is zero if not on any stored diagonal
