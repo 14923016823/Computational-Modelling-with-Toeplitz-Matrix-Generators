@@ -3,18 +3,18 @@
 int main()
 {  
     //Change the dimensions as needed
-    int rows = 10000;
-    int cols = 10000;
+    int rows = 3;
+    int cols = 3;
 
     Vectord vec2(cols*rows);
     for (int i = 0; i < rows * cols; ++i) {
         vec2.Vec[i] = i; // Example initialization
     }
-    return 0;
 
     Laplacian2D_ToeplitzMatrix L2d=Laplacian2D_ToeplitzMatrix(rows,cols);
     Vectord a(rows*cols);
     //Change the amount of loops as needed
-    for(int i=0;i<10;i++)
-        L2d.Laplacian2d(vec2,a);
+    L2d.Laplacian2d(vec2,a);
+    a.print();
+    return 0;
 }
