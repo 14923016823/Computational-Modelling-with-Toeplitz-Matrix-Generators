@@ -43,6 +43,7 @@ SparseToeplitz::SparseToeplitz(SparseToeplitz& other, double c)
 
 void SparseToeplitz::MatMulAdd(const Vectord& x, const int x_start,Vectord& result,const int result_start)
 {
+    #pragma omp parallel for
     for (int j = 0; j < Num_Diags; ++j) 
     {
         int d = Diags[j];
@@ -52,6 +53,7 @@ void SparseToeplitz::MatMulAdd(const Vectord& x, const int x_start,Vectord& resu
             int diag_length=std::min(Num_Rows, Num_Cols-d);
             for(int i=0;i<diag_length;i++)
             {
+                #pragma omp atomic update
                 result[i+result_start]+=v*x[i+d+x_start];
             }
         }
@@ -60,6 +62,7 @@ void SparseToeplitz::MatMulAdd(const Vectord& x, const int x_start,Vectord& resu
             int diag_length=std::min(Num_Cols, Num_Rows+d);
             for(int i=0;i<diag_length;i++)
             {
+                #pragma omp atomic update
                 result[i-d+result_start]+=v*x[i+x_start];
             }
         }
@@ -125,8 +128,6 @@ Matrix* SparseToeplitz::Kronecker(Matrix& B)
         result->Diags[i]=Diags[i];
         result->Vals[i] = B.Clone(Vals[i]);   
     }
-    
-    //printf("vals[i],%f\n",result->Vals);
     return result;
 }
 

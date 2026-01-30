@@ -45,19 +45,17 @@ BlockToeplitz::BlockToeplitz(BlockToeplitz& other,double c)
 
 void BlockToeplitz::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
 {
-    fflush(stdout);
     int br = Vals[0]->rows();  // block row size
     int bc = Vals[0]->cols();  // block col size
 
     int numBlockRows = Num_Rows / br;
     int numBlockCols = Num_Cols / bc;
 
+    #pragma omp parallel for
     for (int k = 0; k < Num_Diags; ++k) 
     {
         int d = Diags[k];       // block-local diagonal
         Matrix* B = Vals[k];    // the block
-        //std::cout << d << std::endl;
-        //std::cout << Vals[k]->rows() << " " << Vals[k]->cols() << "\n";
     
         if (d >= 0) 
         {
@@ -75,8 +73,6 @@ void BlockToeplitz::MatMulAdd(const Vectord& x,const int x_start,Vectord& result
                 B->MatMulAdd(x,x_start+i*bc,result,result_start+(i-d)*br);
             }
         }
-        //std::cout << d << std::endl;
-        //std::cout << Vals[k]->rows() << " " << Vals[k]->cols() << "\n";
     }
 }
 
@@ -99,65 +95,11 @@ Vectord BlockToeplitz::operator*(Vectord& vec)//try not to use this function
     MatMul(vec,result);
     return result;
 }
-/*
-Vectord BlockToeplitz::operator*(Vectord& vec)
-{
-    if (vec.len() != Num_Cols)
-    {
-        throw std::invalid_argument("Vector length and matrix columns don't match (block_toeplitz).");
-    }
 
-    int Num_Rows_SubMatrixes=Vals[0]->rows();
-    int Num_Cols_SubMatrixes=Vals[0]->cols();
-
-    
-    int Num_blockrows = Num_Rows / Num_Rows_SubMatrixes;
-    int Num_blockcols = Num_Cols / Num_Cols_SubMatrixes;
-
-    Vectord result(Num_Rows);
-    //int i;
-    #pragma omp parallel for //private(i)
-    for (int blockrow = 0; blockrow < Num_blockrows; blockrow++)
-    {
-        //int i = omp_get_thread_num();
-    
-        //printf("Hello World... from thread = %d\n", i);
-        //int row = blockrow *;
-        Vectord subres(Num_Rows_SubMatrixes); // initialized to zeros
-        // accumulate contributions from each diagonal/block
-        for (int j = 0; j < Num_Diags; j++)
-        {
-            //printf("i=%d, j=%d\n", i,j);
-            int blockcol = Diags[j] + blockrow;
-            // ensure the whole sub-block fits in input vector
-            if (blockcol >= 0 && blockcol<Num_blockcols)
-            {
-                Vectord subinput(Num_Cols_SubMatrixes);
-                int col_start=blockcol*Num_Cols_SubMatrixes;
-                for (int k = 0; k < Num_Cols_SubMatrixes; ++k)
-                {
-                    subinput.Vec[k] = vec.Vec[col_start + k]; 
-                }
-                Vectord subsubres = Vals[j]->operator*(subinput);
-                Vals[j]->printFullMatrix();
-                std::cout << subsubres.len() << std::endl;
-                subres.Sum(subsubres);
-            }
-        }
-        // copy accumulated block into result
-        int row_start=blockrow*Num_Rows_SubMatrixes;
-        for (int k = 0; k < Num_Rows_SubMatrixes; ++k)
-        {
-            result.Vec[row_start + k] = subres.Vec[k];
-        }
-    }
-    return result;
-}
-*/
 void BlockToeplitz::operator*=(double c)
 {
     int i;
-    //#pragma omp parallel for private(i)
+    #pragma omp parallel for private(i)
     for(i=0;i<Num_Diags;i++)
     {
         Vals[i]->Clone(c);
@@ -168,10 +110,8 @@ void BlockToeplitz::operator*=(double c)
 Matrix* BlockToeplitz::Kronecker(Matrix& B)//if you add a new matrix at the bottom of the chain every Num_Rows needs to be changed
 {
     BlockToeplitz* result = new BlockToeplitz(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Diags);
-    //printf("num diags=%d\n",Num_Diags);
-    //printf("vals[0],%d\n",Vals[0]);
     int i;
-//#pragma omp parallel for private(i)
+#pragma omp parallel for private(i)
     for(i=0;i<Num_Diags;i++)
     {
         result->Diags[i]=Diags[i];

@@ -20,10 +20,11 @@ COO::COO(int num_rows, int num_cols, const std::initializer_list<tuple>& list)
 
 void COO::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
 {
+    #pragma omp parallel for
     for(int i=0;i<Num_Vals;i++)
     {
         double res_i = std::get<2>(Array[i])*x[std::get<1>(Array[i])+x_start];
-        //#pragma omp atomic update
+        #pragma omp atomic update
         result[std::get<0>(Array[i])+result_start] += res_i;
     }
 
@@ -41,8 +42,7 @@ void COO::MatMul(const Vectord& x,Vectord& result)
     MatMulAdd(x,0,result,0);
 }
 
-
-
+//Old matrix-vector multiplication algorithm, for better efficiency use MatMul
 Vectord COO::operator*(Vectord& vect)
 {
     int len = vect.len();
@@ -51,17 +51,12 @@ Vectord COO::operator*(Vectord& vect)
         throw std::invalid_argument("Vector and Matrix size don't match");
     }
     Vectord result(Num_Rows);
-    //double value;
-    //int row_ind;
-    //int col_ind;
-    //int i;
-    //#pragma omp parallel for //private(i, row_ind, col_ind, value)
+    #pragma omp parallel for 
     for(int i=0;i<Num_Vals;i++)
     {
         double res_i = std::get<2>(Array[i])*vect.Vec[std::get<1>(Array[i])];
-        //#pragma omp atomic update
+        #pragma omp atomic update
         result.Vec[std::get<0>(Array[i])] += res_i;
-        //printf("i = %d\n",i);
     }
     return result;
 }
@@ -84,6 +79,7 @@ void COO::print()
     std::cout << ']' << std::endl;
 }
 
+//Convert SparseToeplitz to COO
 COO::COO(SparseToeplitz& ST)
 {
     Num_Vals = 0;
@@ -143,7 +139,7 @@ COO::COO(COO& other,double c)
     Num_Vals=other.Num_Vals;
     Array = new tuple[Num_Vals];
     int i;
-    //#pragma omp parallel for private(i)
+    #pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(Array[i])=std::get<0>(other.Array[i]);
@@ -178,16 +174,13 @@ Matrix* COO::Kronecker(Matrix& B)
     BlockCOO* result = new BlockCOO(B.rows()*Num_Rows,B.cols()*Num_Cols,Num_Vals);
     
     int i;
-    //#pragma omp parallel for private(i)
+    #pragma omp parallel for private(i)
     for(i=0;i<Num_Vals;i++)
     {
         std::get<0>(result->Array[i])=std::get<0>(Array[i]);
         std::get<1>(result->Array[i])=std::get<1>(Array[i]);
         std::get<2>(result->Array[i])=B.Clone(std::get<2>(Array[i]));
-        //std::cout << std::get<2>(Array[i]) << "\n";
     }
-    
-    //printf("vals[i],%f\n",std::get<0>(result->Array)); //This print statement does not work
     return result;
 }
 
@@ -197,7 +190,7 @@ Matrix* COO::negativeTranspose()
     int Rows[Num_Cols+1]; //Array to count entries per row in transposed matrix
     for(int j=0;j<Num_Cols+1;j++)
         Rows[j] = 0;
-//#pragma omp parallel for
+#pragma omp parallel for
     for(int c=0;c<Num_Cols;c++) //Go through columns of original matrix
     {
         for(int i=0;i<Num_Vals;i++) //Go through values
@@ -205,39 +198,26 @@ Matrix* COO::negativeTranspose()
             if(c==std::get<1>(Array[i])) //Check whether current value is in current column
             {
                 Rows[c+1]++;
-                //std::cout << c << '\n';
             }
         }
     }
     for(int c = 0;c<Num_Cols;c++)
     {
         Rows[c+1] += Rows[c];
-        //std::cout << Rows[c+1] << '\n';
     }
 
     int n;
-    //#pragma omp parallel for private(n)
+    #pragma omp parallel for private(n)
     for(int c=0;c<Num_Cols;c++) //Cols of original matrix, so rows of transposed matrix
     {
         n=Rows[c];
-        //printf("%d\n",c);
-        //for(int r=0;r<Num_Rows/block_rows;r++) //Rows of original matrix, so cols of transposed matrix
-        //{   
-            //printf("r = %d\n",r);
             for(int i=0;i<Num_Vals;i++) //Loop over values in current row
             {
-                //printf("c=%d, i=%d\n",c, i);
-                //printf("%d\n",n);
                 if(c==std::get<1>(Array[i]) && n<Rows[c+1])
                 {
-                    //printf("yes, c=%d, i=%d, n=%d\n",c, i,n);
-                    //printf("Rows[%d+1] = %d, n = %d\n",c, Rows[c+1], n);
-                    //printf("block (%d, %d)\n", std::get<1>(Array[i]), std::get<0>(Array[i]));
                     std::get<0>(negTrans->Array[n])=std::get<1>(Array[i]);
                     std::get<1>(negTrans->Array[n])=std::get<0>(Array[i]);
                     std::get<2>(negTrans->Array[n]) = -std::get<2>(Array[i]);
-                    //std::get<2>(Array[i])->printFullMatrix();
-                    //printf("finished c=%d, i=%d, n=%d\n",c, i,n);
                     n++;
                 }
             }
@@ -286,38 +266,4 @@ COO::COO(BlockToeplitz& BT)
             }
         }
     }
-/*
-    //Determine number of non-zero values
-    for(int q = 0; q<BT.Num_Diags;q++)
-    {
-        int f = BT.Diags[q];
-        if(f==0)
-        {
-            Num_Vals += std::min(Num_Cols,Num_Rows);
-        }
-        else if(f>0)
-        {
-            Num_Vals += Num_Cols-f;
-        }
-        else 
-        {
-            Num_Vals += Num_Rows+f;
-        }
-    }
-
-    Array = new tuple[Num_Vals];
-    int c = 0;
-
-    //Fill Array with correct tuples
-    for(int i=0;i<Num_Rows;i++)
-    {
-        for(int j = 0;j<BT.Num_Diags;j++)
-        {
-            if(Num_Cols > BT.Diags[j]+i && BT.Diags[j]+i >= 0)
-            {
-                Array[c] = std::make_tuple(i,BT.Diags[j]+i,BT.Vals[j]);
-                c++;
-            }
-        }
-    }*/
 }

@@ -28,6 +28,7 @@ CSR::CSR(int num_rows, int num_cols, int num_vals)
 
 void CSR::MatMulAdd(const Vectord& x,const int x_start,Vectord& result,const int result_start)
 {
+    //#pragma omp parallel for
     for(int i=0;i<Num_Rows;i++)
     {
 
@@ -52,6 +53,7 @@ void CSR::MatMul(const Vectord& x,Vectord& result)
     MatMulAdd(x,0,result,0);
 };
 
+//Old matrix-vector multiplication algorithm, for better efficiency use MatMul
 Vectord CSR::operator*(Vectord& vect)
 {   
     int len = vect.Length;
@@ -60,23 +62,14 @@ Vectord CSR::operator*(Vectord& vect)
         throw std::invalid_argument("Vector and Matrix size don't match");
     }
     Vectord result(Num_Rows);
-    //int i=0;
-    //int j=0;
     //#pragma omp parallel for //num_threads(12)// private(i,j) 
     for(int i=0;i<Num_Rows;i++)
     {
-        //printf(" i = %d\n",i);
-        //printf("%d\n",Rows[i+1]>Rows[i]);
         double res_i = 0;
         //#pragma omp parallel for reduction(+ : res_i)
         for(int j=Rows[i];j<Rows[i+1];j++)
         {
-            //printf(" j = %d\n",j);
-            //printf("Cols[%d]=%d\n",c,Cols[c]);
-            //printf("vect[%d]=%f\n",Cols[c],vect.Vec[Cols[c]]);
             res_i += vect.Vec[Cols[j]]*Vals[j];
-            //printf("r[i]_j = %f\n",vect.Vec[Cols[c]]*Vals[c]);
-            //printf("r[i]_tot = %f\n",result.Vec[i]);
         }
         result.Vec[i] += res_i;
     }
@@ -94,6 +87,7 @@ CSR::~CSR()
     Cols = nullptr;
 }
 
+//Print values, cols & rows arrays
 void CSR::print()
 {   
     std::cout << "Values: [";
@@ -124,6 +118,7 @@ void CSR::print()
     std::cout << ']' << std::endl;
 }
 
+//Copy and scale
 CSR::CSR(CSR& other, double c)
 {
     Num_Cols = other.Num_Cols;
@@ -274,23 +269,6 @@ Matrix* CSR::negativeTranspose()
             }
         }
     }
-    /*
-    int m = 0;
-    for(int c=0;c<Num_Cols;c++) //Loop over columns of original matrix
-    {
-        for(int r=0;r<Num_Rows;r++) //Loop over rows of original matrix
-        {
-            for(int i=Rows[r];i<Rows[r+1];i++) //Loop over values in current row
-            {
-                if(Cols[i]==c) //Placing this in the i-loop above and replacing m by n does not work
-                {
-                    negTrans->Vals[m] = -Vals[i];
-                    negTrans->Cols[m] = r;
-                    m++;
-                }
-            }
-        }
-    } //Sequential version*/
     return negTrans;
 }
 
