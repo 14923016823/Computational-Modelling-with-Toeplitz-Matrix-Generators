@@ -93,7 +93,7 @@ void Laplacian2D_ToeplitzMatrix::generateMatrix(const int rows, const int cols)
         double x = col * dx;
         double y = row * dy;
         double k_val = k_func(x, y);
-        W_ee_matrix.Diag_Vals[i] = k_val/(pow(dx,2))+k_val/(pow(dy,2));  // use dx (or dy) for spacing
+        W_ee_matrix.Diag_Vals[i] = k_val/(dx*dx)+k_val/(dy*dy);  // use dx (or dy) for spacing
     }
 
     Diagonal=W_ee_matrix.Clone(1.0);
@@ -111,15 +111,12 @@ void Laplacian2D_ToeplitzMatrix::Laplacian2d(const Vectord& input,Vectord& resul
     //input.print();
     Incidence->printFullMatrix();
     Incidence_T->printFullMatrix();
-    std::cout << "0\n";
     
     Incidence->MatMul(input,Tmp1);
-    std::cout << "1\n";
     //b2.print();
     //std::cout << "b\n";
     //Vectord Wb(Diagonal->rows());
     Diagonal->MatMul(Tmp1,Tmp2);
-    std::cout << "2\n";
     //Wb.print();
     //std::cout << "c\n";
     //Vectord final_b(Incidence_T->rows());
@@ -138,29 +135,7 @@ COO Laplacian2D_ToeplitzMatrix::COO_Laplacian()
         std::get<2>(Incidence_T_COO.Array[i])*=sqrt(Diag->Diag_Vals[std::get<0>(Incidence_T_COO.Array[i])]);
     }
 
-    int N = 0;
-    int val_tot = 0;
-    int n_c;
-
-    for(int c=0;c<Incidence_T_COO.rows();c++)
-    {
-        n_c = 0;
-        for(int i = val_tot;i<Incidence_T_COO.Num_Vals;i++)
-        {
-            if(std::get<0>(Incidence_T_COO.Array[i])==c)
-            {
-                n_c++;
-                val_tot++;
-            }
-            if(std::get<0>(Incidence_T_COO.Array[i])>c)
-            {
-                break;
-            }
-        }
-        N += (2*n_c-3);
-    }
-
-    N=5*Incidence_T_COO.rows();
+    int N=5*Incidence_T_COO.rows();
 
     COO result(Incidence_T_COO.rows(), Incidence_T_COO.rows(), N);
 
@@ -251,14 +226,7 @@ CSR Laplacian2D_ToeplitzMatrix::CSR_Laplacian()
         }
     }
 
-    int N = 0;
-
-    for(int c=0;c<Incidence_T_CSR.rows();c++)
-    {
-        N += (2*(Incidence_T_CSR.Rows[c+1]-Incidence_T_CSR.Rows[c])-3);
-    }
-
-    N = 5*Incidence_T_CSR.rows();
+    int N = 5*Incidence_T_CSR.rows();
 
     CSR result(Incidence_T_CSR.rows(), Incidence_T_CSR.rows(), N);
 
