@@ -13,12 +13,13 @@ int main()
     }
 
     Laplacian3D_ToeplitzMatrix L3d=Laplacian3D_ToeplitzMatrix(rows,cols,arrays);
+    std::cout << "Laplacian generated" << std::endl;
     Vectord a(rows*cols*arrays);
     COO L3d_COO = L3d.COO_Laplacian();
     //Change the amount of loops as needed
     for(int i=0;i<10;i++)
+        std::cout << "Iteration " << i << std::endl;
         L3d_COO.MatMul(vec3,a);
-
     return 0;
 
 }
