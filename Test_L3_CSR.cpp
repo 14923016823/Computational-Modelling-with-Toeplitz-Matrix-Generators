@@ -3,9 +3,9 @@
 int main()
 {  
     //Change the dimensions as needed
-    int rows = 100;
-    int cols = 100;
-    int arrays = 100;
+    int rows = 1000;
+    int cols = 1000;
+    int arrays = 1000;
 
     Vectord vec3(cols*rows*arrays);
     for (int i = 0; i < rows * cols * arrays; ++i) {
