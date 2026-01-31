@@ -16,7 +16,7 @@ int main()
     std::cout << "Laplacian generated" << std::endl;
     Vectord a(rows*cols*arrays);
     //Change the amount of loops as needed
-    for(int i=0;i<100;i++)
+    for(int i=0;i<10;i++)
         L3d.Laplacian3d(vec3,a);
 
     return 0;
