@@ -17,7 +17,6 @@ int main()
     Vectord a(rows*cols*arrays);
     //Change the amount of loops as needed
     for(int i=0;i<100;i++)
-        std::cout << "Iteration " << i << std::endl;
         L3d.Laplacian3d(vec3,a);
 
     return 0;
