@@ -13,11 +13,12 @@ int main()
     }
 
     Laplacian3D_ToeplitzMatrix L3d=Laplacian3D_ToeplitzMatrix(rows,cols,arrays);
-    Vectord a(rows*cols);
+    Vectord a(rows*cols*arrays);
     CSR L3d_CSR = L3d.CSR_Laplacian();
     //Change the amount of loops as needed
     for(int i=0;i<10;i++)
         L3d_CSR.MatMul(vec3,a);
 
     return 0;
+
 }
